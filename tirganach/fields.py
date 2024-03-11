@@ -46,7 +46,7 @@ class StringField(Field):
 
 	def parse_bytes(self, byte_source: bytes):
 		assert len(byte_source) == self.len_bytes
-		return byte_source.rstrip(b'\x00').decode('utf-8')
+		return byte_source.rstrip(b'\x00').decode('windows-1252')
 
 	def dump_bytes(self, source: str):
 		return source.encode('utf-8').ljust(self.len_bytes, b'\x00')

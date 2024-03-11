@@ -1,8 +1,7 @@
 import shutil
+from doreah.io import col
 
 from .structure import GameData, GameData154
-
-from doreah.io import col
 
 
 def center_print(left_cell, center_cell, right_cell, header=False):
@@ -16,7 +15,6 @@ def center_print(left_cell, center_cell, right_cell, header=False):
 		print(f"{col['red'](left_cell)} | {center_cell} | {col['blue'](right_cell)}")
 
 
-
 def compare(gd1: GameData, gd2: GameData):
 	for name in gd1.fields:
 		entry1 = getattr(gd1, name)
@@ -24,13 +22,12 @@ def compare(gd1: GameData, gd2: GameData):
 
 		no_diffs_yet = True
 
-		for fieldname in entry1._fields:
-			fieldname: str
-			value1 = getattr(entry1, fieldname)
-			value2 = getattr(entry2, fieldname)
+		for field_name in entry1._fields:
+			value1 = getattr(entry1, field_name)
+			value2 = getattr(entry2, field_name)
 
 			if value1 != value2:
 				if no_diffs_yet:
 					center_print("", name, "", header=True)
 					no_diffs_yet = False
-				center_print(value1, fieldname, value2)
+				center_print(value1, field_name, value2)
