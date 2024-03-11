@@ -46,7 +46,7 @@ class Entity:
 
 # credit to https://github.com/Hokan-Ashir
 
-class Item(Entity):
+class Armor(Entity):
 
 	item_id: int = SignedIntegerField(0, 2)
 	strength: int = IntegerField(2, 2)

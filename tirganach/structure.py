@@ -1,7 +1,7 @@
 from os import PathLike
 from typing import Type, IO, get_origin, get_args
 
-from tirganach.entities import Item, Localisation, Entity, ItemRequirement
+from tirganach.entities import Armor, Localisation, Entity, ItemRequirement
 
 
 class Table(list):
@@ -69,12 +69,8 @@ class GameData:
 class GameData154(GameData):
 	fields = {
 		# just testing so far
-		'starring': (Item, 0x8a71d),
-		#'foolring': (Item, 0x8e7f1),
-		'various_items': (Table[Item], 0x8e7f1, 5),
-		'starringtext': (Localisation, 0x18900cd),
-		'foolringtext': (Localisation, 0x34ae72b),
-		'elvenworkertext': (Localisation, 0x131f1b),
-		'foolringreq': (ItemRequirement, 0x99e21)
+		'items': (Table[Armor], 0x8a71d, 462), # 0, 461
+		'localisation': (Table[Localisation], 0x12f2e3, 115065), # 20, 43311, 95404
+		'item_requirements': (Table[ItemRequirement], 0x99e21, 4) # 0
 	}
 
