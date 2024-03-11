@@ -25,3 +25,12 @@ class SchoolRequirement(Enum):
 	DEATH = (7, 1)
 	NECROMANCY = (7, 2)
 	CURSE = (7, 3)
+
+
+class Language(Enum):
+	GERMAN = 0,
+	ENGLISH = 1,
+	FRENCH = 2,
+	SPANISH = 3,
+	ITALIAN = 4,
+	HAEGAR = 5,

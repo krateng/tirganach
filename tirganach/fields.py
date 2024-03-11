@@ -6,6 +6,7 @@ from typing import Type
 # one field instance is created per entity CLASS, to define how the field looks - there is no actual field instance
 # for each field, these are simply the basic data types like int etc
 
+
 class Field:
 	offset: int
 	len_bytes: int
@@ -26,13 +27,18 @@ class Field:
 
 class IntegerField(Field):
 	data_type = int
+	signed: bool = False
 
 	def parse_bytes(self, byte_source: bytes):
 		assert len(byte_source) == self.len_bytes
-		return int.from_bytes(byte_source, byteorder='little', signed=True)
+		return int.from_bytes(byte_source, byteorder='little', signed=self.signed)
 
 	def dump_bytes(self, source: int):
-		return source.to_bytes(self.len_bytes, byteorder='little', signed=True)
+		return source.to_bytes(self.len_bytes, byteorder='little', signed=self.signed)
+
+
+class SignedIntegerField(IntegerField):
+	signed = True
 
 
 class StringField(Field):

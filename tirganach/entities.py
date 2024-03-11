@@ -1,5 +1,5 @@
-from .types import SchoolRequirement
-from .fields import Field, IntegerField, StringField, BoolField, EnumField
+from .types import SchoolRequirement, Language
+from .fields import Field, IntegerField, StringField, BoolField, EnumField, SignedIntegerField
 
 
 class Entity:
@@ -48,7 +48,7 @@ class Entity:
 
 class Item(Entity):
 
-	item_id: int = IntegerField(0, 2)
+	item_id: int = SignedIntegerField(0, 2)
 	strength: int = IntegerField(2, 2)
 	stamina: int = IntegerField(4, 2)
 	agility: int = IntegerField(6, 2)
@@ -70,18 +70,19 @@ class Item(Entity):
 
 class ItemRequirement(Entity):
 
-	item_id: int = IntegerField(0, 2)
+	item_id: int = SignedIntegerField(0, 2)
 	requirement_number: int = IntegerField(2, 1)
 	#requirement_school: int = IntegerField(3, 1)
 	#requirement_school_sub: int = IntegerField(4, 1)
 	requirement_school: SchoolRequirement = EnumField(3, 2)
-	level: int = IntegerField(5, 1)
+	level: int = SignedIntegerField(5, 1)
 
 
 class Localisation(Entity):
 
-	text_id: int = IntegerField(0, 2)
-	language_id: int = IntegerField(2, 1)
+	text_id: int = SignedIntegerField(0, 2)
+	#language_id: int = IntegerField(2, 1)
+	language: Language = EnumField(2, 1)
 	is_dialogue: bool = BoolField(3, 1)
 	dialogue_name: str = StringField(4, 50)
 	text: str = StringField(54, 512)
@@ -89,24 +90,24 @@ class Localisation(Entity):
 
 class UnitBuildingRequirement(Entity):
 
-	unit_id: int = IntegerField(0, 2)
+	unit_id: int = SignedIntegerField(0, 2)
 	requirement_number: int = IntegerField(2, 1)
-	building_id: int = IntegerField(3, 2)
+	building_id: int = SignedIntegerField(3, 2)
 
 
 class Building(Entity):
 
-	building_id: int = IntegerField(0, 2)
+	building_id: int = SignedIntegerField(0, 2)
 	race_id: int = IntegerField(2, 1)
 	enter_slot: int = IntegerField(3, 1)
 	slots_amount: int = IntegerField(4, 1)
 	health: int = IntegerField(5, 2)
-	name_id: int = IntegerField(7, 2)
+	name_id: int = SignedIntegerField(7, 2)
 	worker_job_time: int = IntegerField(14, 2)
 
 
 class BuildingRequirement(Entity):
 
-	building_id: int = IntegerField(0, 2)
+	building_id: int = SignedIntegerField(0, 2)
 	resource_id: int = IntegerField(2, 1)
-	resource_amount: int = IntegerField(3, 2)
+	resource_amount: int = SignedIntegerField(3, 2)
