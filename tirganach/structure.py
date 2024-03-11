@@ -19,14 +19,14 @@ class GameData:
 
 		for fname, finfo in self.fields.items():
 			entity_type, offset = finfo
-			new_instance = entity_type(raw[offset:offset+entity_type.length()])
+			new_instance = entity_type(raw[offset:offset+entity_type._length()])
 			self.__setattr__(fname, new_instance)
 
 	def _to_bytes(self):
 		for fname, finfo in self.fields.items():
 			instance: Entity = self.__getattribute__(fname)
 			entity_type, offset = finfo
-			self.raw[offset:offset+entity_type.length()] = instance._to_bytes()
+			self.raw[offset:offset+entity_type._length()] = instance._to_bytes()
 		return bytes(self.raw)
 
 	def save(self, filename):
