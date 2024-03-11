@@ -1,3 +1,7 @@
+from enum import Enum
+
+from .types import SchoolRequirement
+
 class Field:
 	offset: int
 	len_bytes: int
@@ -23,6 +27,9 @@ class Entity:
 			elif field_info.data_type is bool:
 				assert len(byte_source) == 1
 				val = (byte_source[0] != 0)
+			elif field_info.data_type is SchoolRequirement:
+				intvals = tuple(byte for byte in byte_source)
+				val = [e for e in SchoolRequirement if e.value == intvals][0]
 			else:
 				raise NotImplemented()
 			self.__setattr__(field_name, val)
@@ -37,6 +44,8 @@ class Entity:
 				val = source.encode('utf-8').ljust(field_info.len_bytes, b'\x00')
 			elif field_info.data_type is bool:
 				val = b'\x01' if source else b'\x00'
+			elif field_info.data_type is SchoolRequirement:
+				val = b''.join([i.to_bytes(1, byteorder='little') for i in source.value])
 			else:
 				raise NotImplemented()
 			result[field_info.offset:field_info.offset+field_info.len_bytes] = val
@@ -87,6 +96,16 @@ class Item(Entity):
 	speed_cast: int = Field(34, 2)
 
 
+class ItemRequirement(Entity):
+
+	item_id: int = Field(0, 2)
+	requirement_number: int = Field(2, 1)
+	#requirement_school: int = Field(3, 1)
+	#requirement_school_sub: int = Field(4, 1)
+	requirement_school: SchoolRequirement = Field(3, 2)
+	level: int = Field(5, 1)
+
+
 class Localisation(Entity):
 
 	text_id: int = Field(0, 2)
@@ -99,7 +118,7 @@ class Localisation(Entity):
 class UnitBuildingRequirement(Entity):
 
 	unit_id: int = Field(0, 2)
-	number_requirement: int = Field(2, 1)
+	requirement_number: int = Field(2, 1)
 	building_id: int = Field(3, 2)
 
 

@@ -1,7 +1,7 @@
 from os import PathLike
 from typing import Type, IO
 
-from tirganach.entities import Item, Localisation, Entity
+from tirganach.entities import Item, Localisation, Entity, ItemRequirement
 
 
 class GameData:
@@ -42,6 +42,6 @@ class GameData154(GameData):
 		'starringtext': (Localisation, 0x18900cd),
 		'foolringtext': (Localisation, 0x34ae72b),
 		'elvenworkertext': (Localisation, 0x131f1b),
-		'elvenworkerrunetext': (Localisation, 0x9e691b)
+		'foolringreq': (ItemRequirement, 0x99e21)
 	}
 
