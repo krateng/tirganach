@@ -34,3 +34,17 @@ class Language(Enum):
 	SPANISH = 3,
 	ITALIAN = 4,
 	HAEGAR = 5,
+
+
+class Race(Enum):
+	HUMANS = 1,
+	DWARVES = 2,
+	ELVES = 3,
+	TROLLS = 4,
+	ORCS = 5,
+	DARKELVES = 6,
+	_SOMEORCSIGUESS = 105,
+	_NORCAINEORSMTH = 137,
+	_WULFGAR = 139,
+	_TROLLSOFSOMESORT = 140,
+	_HOSTILES = 150,

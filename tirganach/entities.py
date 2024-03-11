@@ -1,9 +1,10 @@
-from .types import SchoolRequirement, Language
+from .types import SchoolRequirement, Language, Race
 from .fields import Field, IntegerField, StringField, BoolField, EnumField, SignedIntegerField
 
 
 class Entity:
 	_fields: dict[str, Field]
+	_custom_length: int = None
 
 	def __init__(self, raw_bytes):
 		#print("IN:", ' '.join(format(byte, '02x') for byte in raw_bytes))
@@ -26,7 +27,7 @@ class Entity:
 
 	@classmethod
 	def _length(cls):
-		return max(f.offset+f.len_bytes for f in cls._fields.values())
+		return cls._custom_length or max(f.offset+f.len_bytes for f in cls._fields.values())
 
 	def __init_subclass__(cls):
 		# save info in _fields
@@ -96,14 +97,19 @@ class UnitBuildingRequirement(Entity):
 
 
 class Building(Entity):
+	_custom_length = 23
 
 	building_id: int = SignedIntegerField(0, 2)
-	race_id: int = IntegerField(2, 1)
+	#race_id: int = IntegerField(2, 1)
+	race: Race = EnumField(2, 1)
 	enter_slot: int = IntegerField(3, 1)
 	slots_amount: int = IntegerField(4, 1)
 	health: int = IntegerField(5, 2)
 	name_id: int = SignedIntegerField(7, 2)
 	worker_job_time: int = IntegerField(14, 2)
+
+	def get_name(self):
+		return self._game_data.localisation.where(text_id=self.name_id, language=Language.ENGLISH)[0].text
 
 
 class BuildingRequirement(Entity):

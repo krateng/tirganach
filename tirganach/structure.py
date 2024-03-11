@@ -1,7 +1,7 @@
 from os import PathLike
 from typing import Type, IO, get_origin, get_args
 
-from tirganach.entities import Armor, Localisation, Entity, ItemRequirement
+from tirganach.entities import Armor, Localisation, Entity, ItemRequirement, Building
 
 
 class Table(list):
@@ -38,11 +38,13 @@ class GameData:
 				new_instances = Table(amount, sub_entity_type)
 				for idx in range(0, amount):
 					sub_offset = offset + (idx * sub_entity_type._length())
-					new_instance = sub_entity_type(raw[sub_offset:sub_offset+sub_entity_type._length()])
+					new_instance: Entity = sub_entity_type(raw[sub_offset:sub_offset+sub_entity_type._length()])
+					new_instance._game_data = self
 					new_instances[idx] = new_instance
 				self.__setattr__(fname, new_instances)
 			else:
-				new_instance = entity_type(raw[offset:offset+entity_type._length()])
+				new_instance: Entity = entity_type(raw[offset:offset+entity_type._length()])
+				new_instance._game_data = self
 				self.__setattr__(fname, new_instance)
 
 	def _to_bytes(self):
@@ -71,6 +73,7 @@ class GameData154(GameData):
 		# just testing so far
 		'items': (Table[Armor], 0x8a71d, 462), # 0, 461
 		'localisation': (Table[Localisation], 0x12f2e3, 115065), # 20, 43311, 95404
-		'item_requirements': (Table[ItemRequirement], 0x99e21, 4) # 0
+		'item_requirements': (Table[ItemRequirement], 0x99e21, 4), # 0
+		'buildings': (Table[Building], 0x3f81c94, 140)
 	}
 
