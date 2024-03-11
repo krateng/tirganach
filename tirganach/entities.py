@@ -94,3 +94,28 @@ class Localisation(Entity):
 	is_dialogue: bool = Field(3, 1)
 	dialogue_name: str = Field(4, 50)
 	text: str = Field(54, 512)
+
+
+class UnitBuildingRequirement(Entity):
+
+	unit_id: int = Field(0, 2)
+	number_requirement: int = Field(2, 1)
+	building_id: int = Field(3, 2)
+
+
+class Building(Entity):
+
+	building_id: int = Field(0, 2)
+	race_id: int = Field(2, 1)
+	enter_slot: int = Field(3, 1)
+	slots_amount: int = Field(4, 1)
+	health: int = Field(5, 2)
+	name_id: int = Field(7, 2)
+	worker_job_time: int = Field(14, 2)
+
+
+class BuildingRequirement(Entity):
+
+	building_id: int = Field(0, 2)
+	resource_id: int = Field(2, 1)
+	resource_amount: int = Field(3, 2)
