@@ -8,6 +8,7 @@ from tirganach.entities import Armor, Localisation, Entity, ItemRequirement, Bui
 class Table(list):
 	amount: int
 	entity_type: Type[Entity]
+	entity_index: dict[tuple, Entity] = None
 
 	def __init__(self, amount: int, entity_type: Type[Entity]):
 		super().__init__([None] * amount)
@@ -15,7 +16,22 @@ class Table(list):
 		self.entity_type = entity_type
 
 	def where(self, **kwargs):
+		if pkeys := self.entity_type._primary:
+			if set(kwargs.keys()) == set(pkeys):
+				ordered_pkeyvals = tuple(kwargs[pkey] for pkey in pkeys)
+				result = self.entity_index.get(ordered_pkeyvals)
+				if result:
+					return [result]
+
 		return [e for e in self if all(getattr(e, k) == v for k,v in kwargs.items())]
+
+	def create_index(self):
+		self.entity_index = self.entity_index or {}
+		if pkeys := self.entity_type._primary:
+			for element in self:
+				if element:
+					pkey_vals = tuple(getattr(element, pkey) for pkey in pkeys)
+					self.entity_index[pkey_vals] = element
 
 
 class GameData:
@@ -45,6 +61,7 @@ class GameData:
 					new_instance._game_data = self
 					new_instances[idx] = new_instance
 				self.__setattr__(fname, new_instances)
+				new_instances.create_index()
 			else:
 				new_instance: Entity = entity_type(raw[offset:offset+entity_type._length()])
 				new_instance._game_data = self

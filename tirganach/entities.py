@@ -5,6 +5,7 @@ from .fields import Field, IntegerField, StringField, BoolField, EnumField, Sign
 class Entity:
 	_fields: dict[str, Field]
 	_custom_length: int = None
+	_primary: tuple[str] = None
 
 	def __init__(self, raw_bytes):
 		#print("IN:", ' '.join(format(byte, '02x') for byte in raw_bytes))
@@ -59,6 +60,7 @@ class ItemRequirement(Entity):
 
 
 class Armor(Entity):
+	_primary = 'item_id',
 
 	item_id: int = IntegerField(0, 2)
 	strength: int = SignedIntegerField(2, 2)
@@ -91,6 +93,7 @@ class Armor(Entity):
 
 
 class Localisation(Entity):
+	_primary = 'text_id', 'language'
 
 	text_id: int = IntegerField(0, 2)
 	#language_id: int = IntegerField(2, 1)
@@ -117,6 +120,7 @@ class BuildingRequirement(Entity):
 
 class Building(Entity):
 	_custom_length = 23
+	_primary = 'building_id',
 
 	building_id: int = IntegerField(0, 2)
 	#race_id: int = IntegerField(2, 1)
@@ -140,6 +144,7 @@ class Building(Entity):
 
 
 class CreatureStats(Entity):
+	_primary = 'stats_id',
 
 	stats_id: int = IntegerField(0, 2)
 	level: int = IntegerField(2, 2)
@@ -168,6 +173,7 @@ class CreatureStats(Entity):
 
 class Creature(Entity):
 	_custom_length = 64
+	_primary = 'creature_id',
 
 	creature_id: int = IntegerField(0, 2)
 	name_id: int = IntegerField(2, 2)
