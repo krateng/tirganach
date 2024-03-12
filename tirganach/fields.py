@@ -1,6 +1,8 @@
 from enum import Enum
 from typing import Type
 
+debug_missing_enum_members = {}
+
 # important to avoid errors:
 # the field instance, unlike the entity one, does not refer to one field in the actual data
 # one field instance is created per entity CLASS, to define how the field looks - there is no actual field instance
@@ -69,7 +71,11 @@ class EnumField(Field):
 	def parse_bytes(self, byte_source: bytes):
 		assert len(byte_source) == self.len_bytes
 		int_values = tuple(byte for byte in byte_source)
-		return [e for e in self.data_type if e.value == int_values][0]
+		try:
+			return [e for e in self.data_type if e.value == int_values][0]
+		except IndexError:
+			debug_missing_enum_members.setdefault(self.data_type, set()).add(int_values)
+			return (None, self.data_type, int_values) # for debug purposes
 
 	def dump_bytes(self, source: Enum):
 		assert isinstance(source, self.data_type)
