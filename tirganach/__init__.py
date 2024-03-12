@@ -1,2 +1,2 @@
-from .structure import GameData, GameData154
+from .structure import GameData154, GameData161
 from .compare import compare
