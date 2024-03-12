@@ -74,3 +74,38 @@ class EnumField(Field):
 	def dump_bytes(self, source: Enum):
 		assert isinstance(source, self.data_type)
 		return b''.join([i.to_bytes(1, byteorder='little') for i in source.value])
+
+
+class Relation:
+	mapping: dict
+	target_table: str
+	multiple: bool
+	attributes: list
+
+	def __init__(self, table_name: str, mapping: dict, multiple=False, attributes=[]):
+		self.table_name = table_name
+		self.mapping = mapping
+		self.multiple = multiple
+		self.attributes = attributes
+
+	def __get__(self, instance, owner):
+		if not instance: return None
+		gd = instance._game_data
+		table = getattr(gd, self.table_name)
+		instanced_mapping = {}
+		for k,v in self.mapping.items():
+			if isinstance(v, str):
+				instanced_mapping[k] = getattr(instance, v)
+			else:
+				instanced_mapping[k] = v
+		result = table.where(**instanced_mapping)
+		for key in self.attributes:
+			result = [getattr(r, key) for r in result]
+		if not result:
+			return None
+		if not self.multiple:
+			result = result[0]
+		return result
+
+	def __set__(self, instance, value):
+		pass
