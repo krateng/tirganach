@@ -1,5 +1,8 @@
+import types
 from enum import Enum
 from typing import Type
+
+from tirganach.types import UnknownEnumMember
 
 debug_missing_enum_members = {}
 
@@ -112,15 +115,8 @@ class Relation:
 
 	def __get__(self, instance, owner):
 		if not instance: return None
-		gd = instance._game_data
-		table = getattr(gd, self.table_name)
-		instanced_mapping = {}
-		for k,v in self.mapping.items():
-			if isinstance(v, str):
-				instanced_mapping[k] = getattr(instance, v)
-			else:
-				instanced_mapping[k] = v
-		result = table.where(**instanced_mapping)
+
+		result = self._get_proxied(instance)
 		for key in self.attributes:
 			result = [getattr(r, key) for r in result]
 		if not result:
@@ -130,4 +126,29 @@ class Relation:
 		return result
 
 	def __set__(self, instance, value):
-		pass
+		if self.multiple:
+			print("Cannot set to iterable proxies!")
+			raise ValueError()
+		if not self.attributes:
+			print("Cannot set Proxy directly!")
+			raise ValueError()
+
+		result = self._get_proxied(instance)
+		for key in self.attributes[:-1]:
+			result = [getattr(r, key) for r in result]
+		assert len(result) == 1
+		result = result[0]
+		setattr(result, self.attributes[-1], value)
+
+	def _get_proxied(self, instance):
+
+		gd = instance._game_data
+		table = getattr(gd, self.table_name)
+		instanced_mapping = {}
+		for k,v in self.mapping.items():
+			if isinstance(v, str):
+				instanced_mapping[k] = getattr(instance, v)
+			else:
+				instanced_mapping[k] = v
+		result = table.where(**instanced_mapping)
+		return result
