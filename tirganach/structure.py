@@ -2,7 +2,7 @@ from os import PathLike
 from typing import Type, IO, get_origin, get_args
 
 from tirganach.entities import Armor, Localisation, Entity, ItemRequirement, Building, BuildingRequirement, Creature, \
-	CreatureStats
+	CreatureStats, CreatureResourceRequirement, CreatureEquipment, CreatureSkill, Item, CreatureSpell, Spell, HeroSpell
 
 
 class Table(list):
@@ -97,13 +97,20 @@ class GameData154(GameData):
 	]
 
 	fields = {
-		'items': (Table[Armor], 0x897e8, 635),
+		'armor': (Table[Armor], 0x897e8, 635),
+		'items': (Table[Item], 0x6359e, 7101),
 		'localisation': (Table[Localisation], 0x12d177, 115080),
 		'item_requirements': (Table[ItemRequirement], 0x94450, 5104),
 		'buildings': (Table[Building], 0x3f81c69, 207),
 		'building_requirements': (Table[BuildingRequirement], 0x3f85bbe, 166),
 		'creatures': (Table[Creature], 0x3f4cde6, 2617),
-		'creature_stats': (Table[CreatureStats], 0x4421D, 2536)
+		'creature_stats': (Table[CreatureStats], 0x4421d, 2536),
+		'creature_resources': (Table[CreatureResourceRequirement], 0x3f7defe, 128),
+		'creature_equipment': (Table[CreatureEquipment], 0x3f75c32, 5905),
+		'creature_skills': (Table[CreatureSkill], 0x613c1, 1374),
+		'creature_spells': (Table[CreatureSpell], 0x3f7cf93, 787),
+		'hero_spells': (Table[HeroSpell], 0x62ea3, 355),
+		'spells': (Table[Spell], 0x20, 3439)
 	}
 
 
