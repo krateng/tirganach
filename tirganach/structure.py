@@ -87,6 +87,21 @@ class GameData:
 		with open(filename, 'wb') as fd:
 			fd.write(self._to_bytes())
 
+	def debug_definition_range(self):
+		block_size = 1024 * 256
+		bytes_accounted = [False] * self._length
+		for tabletype, offset, length in self.fields.values():
+			for byte in range(offset, offset + (get_args(tabletype)[0]._length() * length)):
+				bytes_accounted[byte] = True
+		blocks = [0] * round(self._length / block_size)
+		for blockindex in range(len(blocks)):
+			for byteindex in range(blockindex*block_size, (blockindex+1)*block_size):
+				if bytes_accounted[byteindex]:
+					blocks[blockindex] = True
+					break
+
+		print(''.join(('1' if a else '0') for a in blocks))
+
 
 class GameData154(GameData):
 	_length = 66859922

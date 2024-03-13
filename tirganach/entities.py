@@ -51,6 +51,10 @@ class Entity:
 				assert b not in bytes_accounted
 				bytes_accounted.add(b)
 
+	def set(self, **kwargs):
+		for k, v in kwargs.items():
+			setattr(self, k, v)
+
 
 # credit to https://github.com/Hokan-Ashir
 
