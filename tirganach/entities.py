@@ -6,8 +6,11 @@ class Entity:
 	_fields: dict[str, Field]
 	_custom_length: int = None
 	_primary: tuple[str] = None
+	_raw: bytes
 
 	def __init__(self, raw_bytes):
+		self._raw = raw_bytes
+		assert len(raw_bytes) == self._length()
 		#print("IN:", ' '.join(format(byte, '02x') for byte in raw_bytes))
 		for field_name, field_info in self._fields.items():
 			byte_source = raw_bytes[field_info.offset:field_info.offset+field_info.len_bytes]
@@ -15,12 +18,13 @@ class Entity:
 			self.__setattr__(field_name, val)
 
 	def _to_bytes(self):
-		result = bytearray(b'\x00' * self._length())
+		result = bytearray(self._raw)
 		for field_name, field_info in self._fields.items():
 			source = self.__getattribute__(field_name)
 			val = field_info.dump_bytes(source)
 			result[field_info.offset:field_info.offset+field_info.len_bytes] = val
 		#print("OUT:", ' '.join(format(byte, '02x') for byte in result))
+		assert len(result) == self._length()
 		return bytes(result)
 
 	def _to_hex(self):

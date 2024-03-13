@@ -1,5 +1,6 @@
 This is my attempt at creating a library for easier editing of the SpellForce `GameData.cff`.
-There are some options out there, but they usually provide a full Editor / GUI - I wanted a clean library that other stuff can be implemented on top of.
+It operates on low level data the way the database works internally, but hopefully high level abstractions
+can be implemented on top of it eventually.
 
 ```python
 from tirganach import GameData154
