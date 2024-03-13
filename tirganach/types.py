@@ -1,6 +1,14 @@
 from enum import Enum
 
 
+class UnknownEnumMember:
+	def __init__(self, raw: bytes):
+		self.raw = raw
+		self.name = f'Unknown({raw})'
+		self.value = raw
+
+
+
 class SchoolRequirement(Enum):
 	UNKNOWN = (0, 1)
 	LEVEL_ONLY = (0, 0)

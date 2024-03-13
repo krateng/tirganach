@@ -13,14 +13,19 @@ class Field:
 	offset: int
 	len_bytes: int
 	data_type: type
+	type_decider: str
+	# type decider stores the name of another field in the entity
+	# the value of this field must be an enum which implements determine_sub_type
 
-	def __init__(self, offset: int, len_bytes: int, data_type: type = None):
+	def __init__(self, offset: int, len_bytes: int, data_type: type = None, type_decider: str = None):
 		self.offset = offset
 		self.len_bytes = len_bytes
 		if data_type:
 			self.data_type = data_type
+		if type_decider:
+			self.type_decider = type_decider
 
-	def parse_bytes(self, byte_source: bytes):
+	def parse_bytes(self, byte_source: bytes, parent_entity=None):
 		raise NotImplemented()
 
 	def dump_bytes(self, source):
@@ -31,7 +36,7 @@ class IntegerField(Field):
 	data_type = int
 	signed: bool = False
 
-	def parse_bytes(self, byte_source: bytes):
+	def parse_bytes(self, byte_source: bytes, parent_entity=None):
 		assert len(byte_source) == self.len_bytes
 		return int.from_bytes(byte_source, byteorder='little', signed=self.signed)
 
@@ -46,18 +51,20 @@ class SignedIntegerField(IntegerField):
 class StringField(Field):
 	data_type = str
 
-	def parse_bytes(self, byte_source: bytes):
+	def parse_bytes(self, byte_source: bytes, parent_entity=None):
 		assert len(byte_source) == self.len_bytes
 		return byte_source.rstrip(b'\x00').decode('windows-1252')
 
 	def dump_bytes(self, source: str):
-		return source.encode('utf-8').ljust(self.len_bytes, b'\x00')
+		result = source.encode('windows-1252').ljust(self.len_bytes, b'\x00')
+		assert len(result) == self.len_bytes
+		return result
 
 
 class BoolField(Field):
 	data_type = bool
 
-	def parse_bytes(self, byte_source: bytes):
+	def parse_bytes(self, byte_source: bytes, parent_entity=None):
 		assert len(byte_source) == 1 == self.len_bytes
 		return byte_source[0] != 0
 
@@ -68,18 +75,27 @@ class BoolField(Field):
 class EnumField(Field):
 	data_type: Type[Enum]
 
-	def parse_bytes(self, byte_source: bytes):
+	def parse_bytes(self, byte_source: bytes, parent_entity=None):
 		assert len(byte_source) == self.len_bytes
 		int_values = tuple(byte for byte in byte_source)
+		if isinstance(self.data_type, types.UnionType):
+			correct_data_type = getattr(parent_entity, self.type_decider).determine_sub_type()
+		else:
+			correct_data_type = self.data_type
 		try:
-			return [e for e in self.data_type if e.value == int_values][0]
+			return [e for e in correct_data_type if e.value == int_values][0]
 		except IndexError:
-			debug_missing_enum_members.setdefault(self.data_type, set()).add(int_values)
-			return (None, self.data_type, int_values) # for debug purposes
+			debug_missing_enum_members.setdefault(correct_data_type, set()).add(int_values)
+			return UnknownEnumMember(byte_source)
 
 	def dump_bytes(self, source: Enum):
-		assert isinstance(source, self.data_type)
-		return b''.join([i.to_bytes(1, byteorder='little') for i in source.value])
+		if isinstance(source, UnknownEnumMember):
+			result = source.raw
+		else:
+			assert isinstance(source, self.data_type)
+			result = b''.join([i.to_bytes(1, byteorder='little') for i in source.value])
+		assert len(result) == self.len_bytes
+		return result
 
 
 class Relation:
