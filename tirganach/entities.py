@@ -1,4 +1,5 @@
-from .types import SchoolRequirement, Language, Race, Resource, Slots, Gender
+from .types import SchoolRequirement, Language, Race, Resource, SlotConfiguration, Gender, EquipmentSlot, ItemType, \
+	EquipmentType, RuneRace
 from .fields import Field, IntegerField, StringField, BoolField, EnumField, SignedIntegerField, Relation
 
 
@@ -14,7 +15,7 @@ class Entity:
 		#print("IN:", ' '.join(format(byte, '02x') for byte in raw_bytes))
 		for field_name, field_info in self._fields.items():
 			byte_source = raw_bytes[field_info.offset:field_info.offset+field_info.len_bytes]
-			val = field_info.parse_bytes(byte_source)
+			val = field_info.parse_bytes(byte_source, parent_entity=self)
 			self.__setattr__(field_name, val)
 
 	def _to_bytes(self):
@@ -53,6 +54,17 @@ class Entity:
 
 # credit to https://github.com/Hokan-Ashir
 
+class Localisation(Entity):
+	_primary = 'text_id', 'language'
+
+	text_id: int = IntegerField(0, 2)
+	#language_id: int = IntegerField(2, 1)
+	language: Language = EnumField(2, 1)
+	is_dialogue: bool = BoolField(3, 1)
+	dialogue_name: str = StringField(4, 50)
+	text: str = StringField(54, 512)
+
+
 class ItemRequirement(Entity):
 
 	item_id: int = IntegerField(0, 2)
@@ -61,6 +73,110 @@ class ItemRequirement(Entity):
 	#requirement_school_sub: int = IntegerField(4, 1)
 	requirement_school: SchoolRequirement = EnumField(3, 2)
 	level: int = IntegerField(5, 1)
+
+
+class SpellName(Entity):
+	_primary = ''
+
+
+class Spell(Entity):
+	_custom_length = 76
+	_primary = 'spell_id',
+
+	spell_id: int = IntegerField(0, 2)
+	spell_name_id: int = IntegerField(2, 2) # TODO this doesnt refer to a text_id
+	req1_class: SchoolRequirement = EnumField(4, 2)
+	req1_level: int = IntegerField(6, 1)
+	req2_class: SchoolRequirement = EnumField(7, 2)
+	req2_level: int = IntegerField(9, 1)
+	req3_class: SchoolRequirement = EnumField(10, 2)
+	req4_level: int = IntegerField(12, 1)
+
+	noidea: int = IntegerField(13, 3)
+
+	mana: int = IntegerField(16, 2)
+	cast_time: int = IntegerField(18, 4)
+	cooldown: int = IntegerField(22, 4)
+	min_range: int = IntegerField(26, 2)
+	max_range: int = IntegerField(28, 2)
+	cast_type: int = IntegerField(30, 2)
+
+	p1: int = IntegerField(32, 4)
+	p2: int = IntegerField(36, 4)
+	p3: int = IntegerField(40, 4)
+	p4: int = IntegerField(44, 4)
+	p5: int = IntegerField(48, 4)
+	p6: int = IntegerField(52, 4)
+	p7: int = IntegerField(56, 4)
+	p8: int = IntegerField(60, 4)
+	p9: int = IntegerField(64, 4)
+
+	#name: str = Relation('localisation', {'text_id': 'name_id', 'language': Language.ENGLISH}, attributes=['text'])
+
+
+class CreatureSpell(Entity):
+
+	creature_id: int = IntegerField(0, 2)
+	spell_position: int = IntegerField(2, 1)
+	spell_id: int = IntegerField(3, 2)
+
+	spell: Spell = Relation('spells', {'spell_id': 'spell_id'})
+
+
+class HeroSpell(Entity):
+
+	stats_id: int = IntegerField(0, 2)
+	skill_number: int = IntegerField(2, 1)
+	spell_id: int = IntegerField(3, 2)
+
+	spell: Spell = Relation('spells', {'spell_id': 'spell_id'})
+
+
+class CreatureSkill(Entity):
+
+	stats_id: int = IntegerField(0 ,2)
+	skill_school: SchoolRequirement = EnumField(2, 2)
+	#skill_school_class: int = IntegerField(2, 1)
+	#skill_school_sub: int = IntegerField(3, 1)
+	skill_level: int = IntegerField(4, 1)
+
+
+class CreatureStats(Entity):
+	_primary = 'stats_id',
+
+	stats_id: int = IntegerField(0, 2)
+	level: int = IntegerField(2, 2)
+	race: Race = EnumField(4, 1)
+	agility: int = IntegerField(5, 2)
+	charisma: int = IntegerField(7, 2)
+	dexterity: int = IntegerField(9, 2)
+	intelligence: int = IntegerField(11, 2)
+	stamina: int = IntegerField(13, 2)
+	strength: int = IntegerField(15, 2)
+	wisdom: int = IntegerField(17, 2)
+
+	unknown1: int = IntegerField(19, 2)
+
+	resist_fire: int = IntegerField(21, 2)
+	resist_ice: int = IntegerField(23, 2)
+	resist_black: int = IntegerField(25, 2)
+	resist_mind: int = IntegerField(27, 2)
+	speed_walk: int = IntegerField(29, 2)
+	speed_fight: int = IntegerField(31, 2)
+	speed_cast: int = IntegerField(33, 2)
+	size: int = IntegerField(35, 2)
+
+	unknown2: int = IntegerField(37, 2)
+
+	spawn_time: int = IntegerField(39, 4)
+	gender: Gender = EnumField(43, 1)
+	head_id: int = IntegerField(44, 2)
+	equipment_slots: SlotConfiguration = EnumField(46, 1)
+
+	skills: list[CreatureSkill] = Relation('creature_skills', {'stats_id': 'stats_id'}, multiple=True)
+	spells: list[CreatureSpell] = Relation('creature_spells', {'creature_id': 'stats_id'}, multiple=True)
+	hero_spells: list[CreatureSpell] = Relation('hero_spells', {'stats_id': 'stats_id'}, multiple=True)
+	# todo are these connected to stats or creature?
 
 
 class Armor(Entity):
@@ -92,19 +208,8 @@ class Armor(Entity):
 			'item_id': self.item_id,
 			#'name': self.get_name(),
 			#'race': self.race,
-			'requirements': {r.requirement_school: r.level for r in self.requirements}
+			'requirements': {r.requirement_school.name: r.level for r in self.requirements}
 		}
-
-
-class Localisation(Entity):
-	_primary = 'text_id', 'language'
-
-	text_id: int = IntegerField(0, 2)
-	#language_id: int = IntegerField(2, 1)
-	language: Language = EnumField(2, 1)
-	is_dialogue: bool = BoolField(3, 1)
-	dialogue_name: str = StringField(4, 50)
-	text: str = StringField(54, 512)
 
 
 class UnitBuildingRequirement(Entity):
@@ -143,36 +248,54 @@ class Building(Entity):
 			'building_id': self.building_id,
 			'name': self.name,
 			'race': self.race,
-			'requirements': {r.resource: r.resource_amount for r in self.requirements}
+			'requirements': {r.resource.name: r.resource_amount for r in self.requirements}
 		}
 
 
-class CreatureStats(Entity):
-	_primary = 'stats_id',
+class Item(Entity):
+	_primary = 'item_id',
 
-	stats_id: int = IntegerField(0, 2)
-	level: int = IntegerField(2, 2)
-	race: Race = EnumField(4, 1)
-	agility: int = IntegerField(5, 2)
-	charisma: int = IntegerField(7, 2)
-	dexterity: int = IntegerField(9, 2)
-	intelligence: int = IntegerField(11, 2)
-	stamina: int = IntegerField(13, 2)
-	strength: int = IntegerField(15, 2)
-	wisdom: int = IntegerField(17, 2)
+	item_id: int = IntegerField(0, 2)
+	#type_id: int = IntegerField(2, 2)
+	item_type: ItemType = EnumField(2, 1)
+	item_subtype: RuneRace | EquipmentType = EnumField(3, 1, type_decider='item_type')
+	name_id: int = IntegerField(4, 2)
+	unit_stats_id: int = IntegerField(6, 2)
+	army_stats_id: int = IntegerField(8, 2)
+	building_id: int = IntegerField(10, 2)
+	selling_price: int = IntegerField(13, 4)
+	buying_price: int = IntegerField(17, 4)
+	item_set_id: int = IntegerField(21, 1)
 
-	resist_fire: int = IntegerField(21, 2)
-	resist_ice: int = IntegerField(23, 2)
-	resist_black: int = IntegerField(25, 2)
-	resist_mind: int = IntegerField(27, 2)
-	speed_walk: int = IntegerField(29, 2)
-	speed_fight: int = IntegerField(31, 2)
-	speed_cast: int = IntegerField(33, 2)
-	size: int = IntegerField(35, 2)
+	unit_stats: CreatureStats = Relation('creature_stats', {'stats_id': 'unit_stats_id'})
+	army_stats: CreatureStats = Relation('creature_stats', {'stats_id': 'army_stats_id'})
+	building: Building = Relation('buildings', {'building_id': 'building_id'})
+	name: str = Relation('localisation', {'text_id': 'name_id', 'language': Language.ENGLISH}, attributes=['text'])
 
-	spawn_time: int = IntegerField(39, 4)
-	gender: Gender = EnumField(43, 1)
-	equipment_slots: Slots = EnumField(46, 1)
+	def info(self):
+		return {
+			'item_id': self.item_id,
+			'item_type': self.item_type.name,
+			'item_subtype': self.item_subtype.name,
+			'name': self.name
+		}
+
+
+class CreatureResourceRequirement(Entity):
+
+	creature_id: int = IntegerField(0, 2)
+	#resource_id: int = IntegerField(2, 1)
+	resource: Resource = EnumField(2, 1)
+	resource_amount: int = IntegerField(3, 1)
+
+
+class CreatureEquipment(Entity):
+
+	creature_id: int = IntegerField(0, 2)
+	equipment_slot: EquipmentSlot = EnumField(2, 1)
+	item_id: int = IntegerField(3, 2)
+
+	item: Item = Relation('items', {'item_id': 'item_id'})
 
 
 class Creature(Entity):
@@ -188,14 +311,26 @@ class Creature(Entity):
 
 	name: str = Relation('localisation', {'text_id': 'name_id', 'language': Language.ENGLISH}, attributes=['text'])
 	stats: CreatureStats = Relation('creature_stats', {'stats_id': 'stats_id'})
+	requirements: list[CreatureResourceRequirement] = Relation('creature_resources', {'creature_id': 'creature_id'}, multiple=True)
+	equipment: list[CreatureEquipment] = Relation('creature_equipment', {'creature_id': 'creature_id'}, multiple=True)
+
+	skills: list[CreatureSkill] = Relation('creature_skills', {'stats_id': 'creature_id'}, multiple=True)
+	spells: list[CreatureSpell] = Relation('creature_spells', {'creature_id': 'stats_id'}, multiple=True)
+	# todo are these connected to stats or creature?
 
 	def info(self):
 		stats = self.stats
-		return {
-			'name': self.name,
-			'unit_name': self.unit_name,
+		extra = {
 			'level': stats.level,
 			'race': stats.race,
 			'gender': stats.gender,
-			'equipment_slots': stats.equipment_slots
+			'equipment_slots': stats.equipment_slots,
+			'skills': stats.skills
+		} if stats else {}
+		return {
+			'name': self.name,
+			'unit_name': self.unit_name,
+			**extra,
+			'requirements': {r.resource.name: r.resource_amount for r in self.requirements},
+			'equipment': {e.equipment_slot.name: e.item_id for e in self.equipment}
 		}

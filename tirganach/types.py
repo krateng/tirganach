@@ -50,9 +50,17 @@ class Language(Enum):
 	SPANISH = 3,
 	ITALIAN = 4,
 	_HAEGAR = 5,
-	_UNKNOWN1 = 32,
-	_UNKNOWN2 = 97,
-	_UNKNOWN3 = 101,
+
+
+class RuneRace(Enum):
+	# apprently these are different from the race
+	HEROES = 0,
+	HUMANS = 1,
+	ELVES = 2,
+	DWARVES = 3,
+	ORCS = 4,
+	TROLLS = 5,
+	DARKELVES = 6,
 
 
 class Race(Enum):
@@ -194,18 +202,24 @@ class Race(Enum):
 
 
 class Resource(Enum):
-	_WEIRD = 0, # used by human grainfarm, cattle and med hq
+	_UNKNOWN = 0, # used by human grainfarm, cattle and med hq
 	WOOD = 1,
 	STONE = 2,
-	_TBD = 3,
-	_TBD2 = 4,
-	_TBD3 = 5,
-	_TBD4 = 7,
-	_NOIDEA = 10,
+	LOGS = 3,
+	MOONSILVER = 4,
+	FOOD = 5,
+	BERRIES = 6,
+	IRON = 7,
+	TREES = 8,
+	GRAIN = 9
+	_UNKNOWN1 = 10,
+	FISH = 11,
+	MUSHROOMS = 15,
+	MEAT = 16,
 	ARIA = 18,
 	LENYA = 19,
-	_WAT = 47,
-	_WUT = 73,
+	_UNKNOWN2 = 47,
+	_UNKNOWN3 = 73,
 
 
 class Gender(Enum):
@@ -215,7 +229,52 @@ class Gender(Enum):
 	FEMALE_ESSENTIAL = 3,
 
 
-class Slots(Enum):
+class SlotConfiguration(Enum):
 	ALL = 1,
 	HANDS_AND_RINGS = 2,
 	NONE = 3,
+
+
+class EquipmentSlot(Enum):
+	HELMET = 0,
+	RIGHT_HAND = 1,
+	CHEST = 2,
+	LEFT_HAND = 3,
+	RIGHT_RING = 4,
+	LEGS = 5,
+	LEFT_RING = 6,
+	UNKNOWN = 12,
+
+
+class ItemType(Enum):
+	EQUIPMENT = 1,
+	RUNE_INVENTORY = 2,
+	RUNE_ADDED = 3,
+	SCROLL = 4,
+	SPELL = 5,
+	UNIT_PLAN_INVENTORY = 6,
+	BUILDING_PLAN_INVENTORY = 7,
+	UNIT_PLAN_ADDED = 8,
+	BUILDING_PLAN_ADDED = 9,
+	QUEST_ITEM = 10,
+	BLANK_SCROLL = 11,
+
+	def determine_sub_type(self):
+		if self in [self.RUNE_INVENTORY, self.RUNE_ADDED, self.UNIT_PLAN_INVENTORY, self.UNIT_PLAN_ADDED, self.BUILDING_PLAN_INVENTORY, self.BUILDING_PLAN_ADDED]:
+			return RuneRace
+		else:
+			return EquipmentType
+
+class EquipmentType(Enum):
+	NOTHING = 0,
+	HELMET = 1,
+	UPPER = 2,
+	LOWER = 3,
+	RING = 6,
+	ONEHANDED_WEAPON = 7,
+	TWOHANDED_WEAPON = 8,
+	SHIELD = 9,
+	FULL_BODY = 10,
+	FIGURE_NPC = 11,
+	BOW = 12,
+	FIGURE_HERO = 13,
