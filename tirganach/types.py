@@ -272,6 +272,7 @@ class ItemType(Enum):
 		else:
 			return EquipmentType
 
+
 class EquipmentType(Enum):
 	NOTHING = 0,
 	HELMET = 1,
@@ -285,3 +286,54 @@ class EquipmentType(Enum):
 	FIGURE_NPC = 11,
 	BOW = 12,
 	FIGURE_HERO = 13,
+
+
+class SpellName(Enum):
+	# havent figured out the db connection yet, so use an enum for now
+	### ELEMENTAL
+	ELEMENTAL_ALMIGHTY = 180, 0 # VERIFY
+	ELEMENTAL_ALMIGHTY2 = 182, 0 # VERIFY
+
+	# ICE
+	BLIZZARD = 74, 0
+	ICE_WAVE = 137, 0
+	ICE_ELEMENTAL = 136, 0
+	CHAIN_ICEBURST = 205, 0
+	ICE_GOLEM = 206, 0
+	FREEZE = 9, 0
+	FOG = 10, 0
+	ICE_SHIELD = 15, 0
+	ICE_BURST = 14, 0 # VERIFY
+	CHILL_RESIST = 145, 0 # VERIFY
+	CHILL_RESIST2 = 139, 0 # VERIFY
+	AREA_FREEZE = 207, 0 # VERIFY
+	AREA_FREEZE2 = 235, 0 # VERIFY
+
+	# FIRE
+	FIRE_RAIN = 73, 0
+	FIREBALL = 13, 0
+	MELT_RESIST = 135, 0
+	ILLUMINATE = 11, 0
+	FIRE_SHIELD = 12, 0
+	FIRE_BURST = 1, 0 # VERIFY
+	FIRE_BURST2 = 159, 0 # VERIFY
+	FIRE_WAVE = 159, 0 # VERIFY
+	FIRE_WAVE2 = 134, 0 # VERIFY
+	CHAIN_FIREBURST = 202, 0
+	CHAIN_FIREBALL = 204, 0
+	FIRE_GOLEM = 203, 0
+	FIRE_ELEMENTAL = 133, 0
+
+	### WHITE
+
+	# LIFE
+	HEALING = 2, 0
+	AURA_HEAL = 103, 0
+	GREAT_HEALING = 45, 0
+	AREA_HEAL = 43, 0
+
+	# BOONS
+	HALLOW = 58, 0
+
+
+
