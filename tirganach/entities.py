@@ -1,6 +1,6 @@
 from .types import SchoolRequirement, Language, Race, Resource, SlotConfiguration, Gender, EquipmentSlot, ItemType, \
-	EquipmentType, RuneRace
-from .fields import Field, IntegerField, StringField, BoolField, EnumField, SignedIntegerField, Relation
+	EquipmentType, RuneRace, SpellName
+from .fields import Field, IntegerField, StringField, BoolField, EnumField, SignedIntegerField, Relation, Alias
 
 
 class Entity:
@@ -17,6 +17,13 @@ class Entity:
 			byte_source = raw_bytes[field_info.offset:field_info.offset+field_info.len_bytes]
 			val = field_info.parse_bytes(byte_source, parent_entity=self)
 			self.__setattr__(field_name, val)
+
+	def __repr__(self):
+		if hasattr(self, 'name'):
+			return f"<[{self.__class__.__name__}] {self.name}>"
+		else:
+			return f"<[{self.__class__.__name__}]>"
+
 
 	def _to_bytes(self):
 		result = bytearray(self._raw)
@@ -79,8 +86,8 @@ class ItemRequirement(Entity):
 	level: int = IntegerField(5, 1)
 
 
-class SpellName(Entity):
-	_primary = ''
+#class SpellName(Entity):
+#	_primary = ''
 
 
 class Spell(Entity):
@@ -88,13 +95,14 @@ class Spell(Entity):
 	_primary = 'spell_id',
 
 	spell_id: int = IntegerField(0, 2)
-	spell_name_id: int = IntegerField(2, 2) # TODO this doesnt refer to a text_id
+	#spell_name_id: int = IntegerField(2, 2) # TODO this doesnt refer to a text_id
+	spell_name: SpellName = EnumField(2, 2)
 	req1_class: SchoolRequirement = EnumField(4, 2)
 	req1_level: int = IntegerField(6, 1)
 	req2_class: SchoolRequirement = EnumField(7, 2)
 	req2_level: int = IntegerField(9, 1)
 	req3_class: SchoolRequirement = EnumField(10, 2)
-	req4_level: int = IntegerField(12, 1)
+	req3_level: int = IntegerField(12, 1)
 
 	noidea: int = IntegerField(13, 3)
 
@@ -104,6 +112,7 @@ class Spell(Entity):
 	min_range: int = IntegerField(26, 2)
 	max_range: int = IntegerField(28, 2)
 	cast_type: int = IntegerField(30, 2)
+	# 258 aura, # 257 spell, 1025 area
 
 	p1: int = IntegerField(32, 4)
 	p2: int = IntegerField(36, 4)
@@ -116,6 +125,7 @@ class Spell(Entity):
 	p9: int = IntegerField(64, 4)
 
 	#name: str = Relation('localisation', {'text_id': 'name_id', 'language': Language.ENGLISH}, attributes=['text'])
+	level: int = Alias('req1_level')
 
 
 class CreatureSpell(Entity):
