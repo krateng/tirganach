@@ -154,3 +154,18 @@ class Relation:
 				instanced_mapping[k] = v
 		result = table.where(**instanced_mapping)
 		return result
+
+
+class Alias:
+	target: str
+
+	def __init__(self, target):
+		self.target = target
+
+	def __get__(self, instance, owner):
+		if not instance: return None
+		return getattr(instance, self.target)
+
+	def __set__(self, instance, value):
+		if not instance: return None
+		return setattr(instance, self.target, value)
