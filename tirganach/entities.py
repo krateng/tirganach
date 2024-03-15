@@ -285,6 +285,7 @@ class Item(Entity):
 	unit_stats_id: int = IntegerField(6, 2)
 	army_stats_id: int = IntegerField(8, 2)
 	building_id: int = IntegerField(10, 2)
+	unknown1: int = IntegerField(12, 1)
 	selling_price: int = IntegerField(13, 4)
 	buying_price: int = IntegerField(17, 4)
 	item_set_id: int = IntegerField(21, 1)

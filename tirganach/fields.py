@@ -109,6 +109,8 @@ class Relation:
 	multiple: bool
 	attributes: list
 
+	# todo: assign object directly to relation -> sets reference id
+
 	def __init__(self, table_name: str, mapping: dict, multiple=False, attributes=[]):
 		self.table_name = table_name
 		self.mapping = mapping
