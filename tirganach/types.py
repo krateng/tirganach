@@ -1,12 +1,19 @@
 from enum import Enum
+from typing import Type
 
 
 class UnknownEnumMember:
-	def __init__(self, raw: bytes):
-		self.raw = raw
-		self.name = f'Unknown({raw})'
-		self.value = raw
+	name: str
+	value: tuple[int, ...]
+	cls: Type[Enum]
 
+	def __init__(self, value: tuple[int, ...], cls: Type[Enum]):
+		self.value = value
+		self.cls = cls
+		self.name = f"<Unknown {self.cls.__name__}: {self.value}>"
+
+	def __repr__(self):
+		return self.name
 
 
 class SchoolRequirement(Enum):

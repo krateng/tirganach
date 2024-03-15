@@ -89,14 +89,16 @@ class EnumField(Field):
 			return [e for e in correct_data_type if e.value == int_values][0]
 		except IndexError:
 			debug_missing_enum_members.setdefault(correct_data_type, set()).add(int_values)
-			return UnknownEnumMember(byte_source)
+			return UnknownEnumMember(value=int_values, cls=correct_data_type)
 
 	def dump_bytes(self, source: Enum):
 		if isinstance(source, UnknownEnumMember):
-			result = source.raw
+			pass
+			# val will also be in source.value
 		else:
 			assert isinstance(source, self.data_type)
-			result = b''.join([i.to_bytes(1, byteorder='little') for i in source.value])
+
+		result = b''.join([i.to_bytes(1, byteorder='little') for i in source.value])
 		assert len(result) == self.len_bytes
 		return result
 
