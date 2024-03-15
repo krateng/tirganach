@@ -1,5 +1,5 @@
 from .types import SchoolRequirement, Language, Race, Resource, SlotConfiguration, Gender, EquipmentSlot, ItemType, \
-	EquipmentType, RuneRace, SpellName
+	EquipmentType, RuneRace
 from .fields import Field, IntegerField, StringField, BoolField, EnumField, SignedIntegerField, Relation, Alias
 
 
@@ -86,8 +86,15 @@ class ItemRequirement(Entity):
 	level: int = IntegerField(5, 1)
 
 
-#class SpellName(Entity):
-#	_primary = ''
+class SpellName(Entity):
+	_custom_length = 75
+	_primary = ''
+
+	spell_name_id: int = IntegerField(0, 2)
+	text_id: int = IntegerField(2, 2)
+
+	text = Relation('localisation', {'text_id': 'text_id', 'language': Language.ENGLISH}, attributes=['text'])
+	# so that the relation from spell gets passed through
 
 
 class Spell(Entity):
@@ -95,8 +102,8 @@ class Spell(Entity):
 	_primary = 'spell_id',
 
 	spell_id: int = IntegerField(0, 2)
-	#spell_name_id: int = IntegerField(2, 2) # TODO this doesnt refer to a text_id
-	spell_name: SpellName = EnumField(2, 2)
+	spell_name_id: int = IntegerField(2, 2)
+	#spell_name: SpellName = EnumField(2, 2)
 	req1_class: SchoolRequirement = EnumField(4, 2)
 	req1_level: int = IntegerField(6, 1)
 	req2_class: SchoolRequirement = EnumField(7, 2)
@@ -125,6 +132,7 @@ class Spell(Entity):
 	p9: int = IntegerField(64, 4)
 
 	#name: str = Relation('localisation', {'text_id': 'name_id', 'language': Language.ENGLISH}, attributes=['text'])
+	name: str = Relation('spell_names', {'spell_name_id': 'spell_name_id'}, attributes=['text'])
 	level: int = Alias('req1_level')
 
 

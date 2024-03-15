@@ -2,7 +2,8 @@ from os import PathLike
 from typing import Type, IO, get_origin, get_args, TypeVar, Generic
 
 from tirganach.entities import Armor, Localisation, Entity, ItemRequirement, Building, BuildingRequirement, Creature, \
-	CreatureStats, CreatureResourceRequirement, CreatureEquipment, CreatureSkill, Item, CreatureSpell, Spell, HeroSpell
+	CreatureStats, CreatureResourceRequirement, CreatureEquipment, CreatureSkill, Item, CreatureSpell, Spell, HeroSpell, \
+	SpellName
 
 T = TypeVar('T', bound=Entity)
 
@@ -143,6 +144,7 @@ class GameData154(GameData):
 	creature_spells: Table[CreatureSpell] = TableDefinition(CreatureSpell, 0x3f7cf93, 787)
 	hero_spells: Table[HeroSpell] = TableDefinition(HeroSpell, 0x62ea3, 355)
 	spells: Table[Spell] = TableDefinition(Spell, 0x20, 3439)
+	spell_names: Table[SpellName] = TableDefinition(SpellName, 0x3fd20, 233) #verify exact offset
 
 
 class GameData161(GameData):
