@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, Flag
 from typing import Type
 
 
@@ -286,3 +286,29 @@ class EquipmentType(Enum):
 	FIGURE_NPC = 11,
 	BOW = 12,
 	FIGURE_HERO = 13,
+
+
+class RaceFlags(Flag):
+	UNDEAD = 1
+	BREATHING = 2
+	HUNTABLE = 4
+	ANIMAL = 8
+	HAS_SOUL = 16
+	ATTACKS_BUILDINGS = 32
+	BLEEDS = 64
+
+
+class RaceAIFlags(Flag):
+	DEFAULT = 1
+	IDLE = 2
+	STROLL_ALONG = 4
+	NOMADIC = 8
+	AGGRESSIVE = 16
+	DEFENSIVE = 32
+	SCRIPT = 64
+
+
+class CultivationFlags(Flag):
+	GRAIN = 1
+	MUSHROOMS = 2
+	TREES = 4

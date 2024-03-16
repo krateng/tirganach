@@ -1,3 +1,4 @@
+import enum
 import types
 from enum import Enum
 from typing import Type
@@ -69,6 +70,7 @@ class BoolField(Field):
 
 	def parse_bytes(self, byte_source: bytes, parent_entity=None):
 		assert len(byte_source) == 1 == self.len_bytes
+		assert byte_source[0] in (0, 1)
 		return byte_source[0] != 0
 
 	def dump_bytes(self, source: bool):
@@ -81,13 +83,19 @@ class EnumField(Field):
 	def parse_bytes(self, byte_source: bytes, parent_entity=None):
 		assert len(byte_source) == self.len_bytes
 		int_values = tuple(byte for byte in byte_source)
+
 		if isinstance(self.data_type, types.UnionType):
 			correct_data_type = getattr(parent_entity, self.type_decider).determine_sub_type()
+		elif issubclass(self.data_type, enum.Flag):
+			correct_data_type = self.data_type
+			int_values = int_values[0]
 		else:
 			correct_data_type = self.data_type
+
 		try:
-			return [e for e in correct_data_type if e.value == int_values][0]
-		except IndexError:
+			return correct_data_type(int_values)
+			#return [e for e in correct_data_type if e.value == int_values][0]
+		except ValueError:
 			debug_missing_enum_members.setdefault(correct_data_type, set()).add(int_values)
 			return UnknownEnumMember(value=int_values, cls=correct_data_type)
 
@@ -97,8 +105,11 @@ class EnumField(Field):
 			# val will also be in source.value
 		else:
 			assert isinstance(source, self.data_type)
-
-		result = b''.join([i.to_bytes(1, byteorder='little') for i in source.value])
+		if issubclass(self.data_type, enum.Flag):
+			source_value = [source.value]
+		else:
+			source_value = source.value
+		result = b''.join([i.to_bytes(1, byteorder='little') for i in source_value])
 		assert len(result) == self.len_bytes
 		return result
 
