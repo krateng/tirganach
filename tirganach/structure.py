@@ -9,14 +9,12 @@ T = TypeVar('T', bound=Entity)
 
 
 class Table(list[T], Generic[T]):
-	size: int
 	offset: int
 	entity_type: Type[Entity]
 	entity_index: dict[tuple, Entity] = None
 
-	def __init__(self, entity_type: Type[Entity], offset: int, size: int):
-		super().__init__([None] * size)
-		self.size = size
+	def __init__(self, entity_type: Type[Entity], offset: int, rows: int):
+		super().__init__([None] * rows)
 		self.entity_type = entity_type
 		self.offset = offset
 
@@ -44,16 +42,14 @@ class TableDefinition:
 	# we only want the actual table instance for the specific table in a loaded gamedata
 	# so this class is used to just inform how the generic table looks for that gamedata
 	entity_type: Type[Entity]
-	size: int
 	offset: int
 
-	def __init__(self, entity_type: Type[Entity], offset: int, size: int):
+	def __init__(self, entity_type: Type[Entity], offset: int):
 		self.entity_type = entity_type
-		self.size = size
 		self.offset = offset
 
-	def create_table(self):
-		return Table(entity_type=self.entity_type, size=self.size, offset=self.offset)
+	def create_table(self, rows: int):
+		return Table(entity_type=self.entity_type, offset=self.offset, rows=rows)
 
 
 class GameData:
@@ -81,9 +77,16 @@ class GameData:
 		assert len(self.raw) == self._length
 
 		for table_name, table_definition in self._tables.items():
+			# size is saved in the table header!!!
+			# this probably means we can add and remove rows now!
+			table_header_offset = table_definition.offset - 6
+			table_size_bytes = int.from_bytes(raw[table_header_offset: table_header_offset+4], byteorder='little', signed=False)
+			table_size_rows = int(table_size_bytes / table_definition.entity_type._length())
+			assert table_size_rows == (table_size_bytes / table_definition.entity_type._length())
 
-			table = table_definition.create_table()
-			for idx in range(0, table_definition.size):
+			table = table_definition.create_table(rows=table_size_rows)
+
+			for idx in range(0, table_size_rows):
 				sub_offset = table_definition.offset + (idx * table_definition.entity_type._length())
 				new_instance: Entity = table_definition.entity_type(raw[sub_offset:sub_offset+table_definition.entity_type._length()])
 				new_instance._game_data = self
@@ -95,7 +98,8 @@ class GameData:
 	def _to_bytes(self):
 		for table_name, table_definition in self._tables.items():
 			table_instance: Table = getattr(self, table_name)
-			for idx in range(0, table_definition.size):
+			for idx in range(0, len(table_instance)):
+				# todo: dynamic length, write to header!
 				sub_offset = table_definition.offset + (idx * table_definition.entity_type._length())
 				instance: table_definition.entity_type = table_instance[idx]
 				self.raw[sub_offset:sub_offset+table_definition.entity_type._length()] = instance._to_bytes()
@@ -130,27 +134,27 @@ class GameData154(GameData):
 		'c09948dc3e9e2908383f844ec2b4a976' # russian
 	]
 
-	armor: Table[Armor] = TableDefinition(Armor, 0x897e8, 635)
-	items: Table[Item] = TableDefinition(Item, 0x6359e, 7101)
-	localisation: Table[Localisation] = TableDefinition(Localisation, 0x12d177, 115080)
-	item_requirements: Table[ItemRequirement] = TableDefinition(ItemRequirement, 0x94450, 5104)
-	buildings: Table[Building] = TableDefinition(Building, 0x3f81c69, 207)
-	building_requirements: Table[BuildingRequirement] = TableDefinition(BuildingRequirement, 0x3f85bbe, 166)
-	creatures: Table[Creature] = TableDefinition(Creature, 0x3f4cde6, 2617)
-	creature_stats: Table[CreatureStats] = TableDefinition(CreatureStats, 0x4421d, 2536)
-	creature_resources: Table[CreatureResourceRequirement] = TableDefinition(CreatureResourceRequirement, 0x3f7defe, 128)
-	creature_equipment: Table[CreatureEquipment] = TableDefinition(CreatureEquipment, 0x3f75c32, 5905)
-	creature_skills: Table[CreatureSkill] = TableDefinition(CreatureSkill, 0x613c1, 1374)
-	creature_spells: Table[CreatureSpell] = TableDefinition(CreatureSpell, 0x3f7cf93, 787)
-	hero_spells: Table[HeroSpell] = TableDefinition(HeroSpell, 0x62ea3, 355)
-	spells: Table[Spell] = TableDefinition(Spell, 0x20, 3439)
-	spell_names: Table[SpellName] = TableDefinition(SpellName, 0x3fd20, 233) #verify exact offset
+	spells: Table[Spell] = TableDefinition(Spell, 0x20)
+	spell_names: Table[SpellName] = TableDefinition(SpellName, 0x3fd20)
+	creature_stats: Table[CreatureStats] = TableDefinition(CreatureStats, 0x4421d)
+	creature_skills: Table[CreatureSkill] = TableDefinition(CreatureSkill, 0x613c1)
+	hero_spells: Table[HeroSpell] = TableDefinition(HeroSpell, 0x62ea3)
+	items: Table[Item] = TableDefinition(Item, 0x6359e)
+	armor: Table[Armor] = TableDefinition(Armor, 0x897e8)
+	item_requirements: Table[ItemRequirement] = TableDefinition(ItemRequirement, 0x94450)
+	localisation: Table[Localisation] = TableDefinition(Localisation, 0x12d177)
+	creatures: Table[Creature] = TableDefinition(Creature, 0x3f4cde6)
+	creature_equipment: Table[CreatureEquipment] = TableDefinition(CreatureEquipment, 0x3f75c32)
+	creature_spells: Table[CreatureSpell] = TableDefinition(CreatureSpell, 0x3f7cf93)
+	creature_resources: Table[CreatureResourceRequirement] = TableDefinition(CreatureResourceRequirement, 0x3f7defe)
+	buildings: Table[Building] = TableDefinition(Building, 0x3f81c69)
+	building_requirements: Table[BuildingRequirement] = TableDefinition(BuildingRequirement, 0x3f85bbe)
 
 
 class GameData161(GameData):
 	_length = 66859988
 
-	items: Table[Armor] = TableDefinition(Armor, 0x8a71d, 500+0),
-	localisation: Table[Localisation] = TableDefinition(Localisation, 0x12f2e3, 115065),
-	item_requirements: Table[ItemRequirement] = TableDefinition(ItemRequirement, 0x99e21, 100+0),
-	buildings: Table[Building] = TableDefinition(Building, 0x3f81c94, 140)
+	items: Table[Armor] = TableDefinition(Armor, 0x8a71d),
+	localisation: Table[Localisation] = TableDefinition(Localisation, 0x12f2e3),
+	item_requirements: Table[ItemRequirement] = TableDefinition(ItemRequirement, 0x99e21),
+	buildings: Table[Building] = TableDefinition(Building, 0x3f81c94)
