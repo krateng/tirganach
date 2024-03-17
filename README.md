@@ -1,9 +1,12 @@
 A Python library for easier editing of the SpellForce `GameData.cff`.
-It essentially presents the data as a relational database.
 
 Information about the file structure was gathered from
 * [Hokan-Ashir/SFGameDataEditor](https://github.com/Hokan-Ashir/SFGameDataEditor)
 * [leszekd25/spellforce_data_editor](https://github.com/leszekd25/spellforce_data_editor)
+
+If you're here to reverse engineer the file / create your own library, have a look at [this short explanation](./EXPLANATION.md).
+
+Here's how you use `tirganach`.
 
 ```python
 from tirganach import GameData154
