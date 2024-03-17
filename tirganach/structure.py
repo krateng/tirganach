@@ -3,7 +3,9 @@ from typing import Type, IO, get_origin, get_args, TypeVar, Generic
 
 from tirganach.entities import Armor, Localisation, Entity, ItemRequirement, Building, BuildingRequirement, Creature, \
 	CreatureStats, CreatureResourceRequirement, CreatureEquipment, CreatureSkill, Item, CreatureSpell, Spell, HeroSpell, \
-	SpellName
+	SpellName, Upgrade, ItemInstall, Weapon, ItemEffect, ItemUI, SpellEffect, RaceDB, UnitBuildingRequirement, Skill, \
+	SkillRequirement, ResourceName, Level, NPCName, Map, Portal, Description, AdvancedDescription, Quest, \
+	WeaponTypeName, WeaponMaterialName, ItemSet
 
 T = TypeVar('T', bound=Entity)
 
@@ -18,7 +20,7 @@ class Table(list[T], Generic[T]):
 		self.entity_type = entity_type
 		self.offset = offset
 
-	def where(self, **kwargs):
+	def where(self, **kwargs) -> list[T]:
 		if pkeys := self.entity_type._primary:
 			if set(kwargs.keys()) == set(pkeys):
 				ordered_pkeyvals = tuple(kwargs[pkey] for pkey in pkeys)

@@ -16,7 +16,7 @@ class UnknownEnumMember:
 		return self.name
 
 
-class SchoolRequirement(Enum):
+class School(Enum):
 	UNKNOWN = (0, 1)
 	LEVEL_ONLY = (0, 0)
 	LIGHT_COMBAT = (1, 0)

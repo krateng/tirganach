@@ -1,4 +1,4 @@
-from .types import SchoolRequirement, Language, Race, Resource, SlotConfiguration, Gender, EquipmentSlot, ItemType, \
+from .types import School, Language, Race, Resource, SlotConfiguration, Gender, EquipmentSlot, ItemType, \
 	EquipmentType, RuneRace, RaceFlags
 from .fields import Field, IntegerField, StringField, BoolField, EnumField, SignedIntegerField, Relation, Alias
 
@@ -267,7 +267,7 @@ class ItemRequirement(Entity):
 	requirement_number: int = IntegerField(2, 1)
 	#requirement_school: int = IntegerField(3, 1)
 	#requirement_school_sub: int = IntegerField(4, 1)
-	requirement_school: SchoolRequirement = EnumField(3, 2)
+	requirement_school: School = EnumField(3, 2)
 	level: int = IntegerField(5, 1)
 
 
@@ -329,11 +329,11 @@ class Spell(Entity):
 	spell_id: int = IntegerField(0, 2)
 	spell_name_id: int = IntegerField(2, 2)
 	#spell_name: SpellName = EnumField(2, 2)
-	req1_class: SchoolRequirement = EnumField(4, 2)
+	req1_class: School = EnumField(4, 2)
 	req1_level: int = IntegerField(6, 1)
-	req2_class: SchoolRequirement = EnumField(7, 2)
+	req2_class: School = EnumField(7, 2)
 	req2_level: int = IntegerField(9, 1)
-	req3_class: SchoolRequirement = EnumField(10, 2)
+	req3_class: School = EnumField(10, 2)
 	req3_level: int = IntegerField(12, 1)
 
 	noidea: int = IntegerField(13, 3) # req 4 according to leszekd25
@@ -360,8 +360,9 @@ class Spell(Entity):
 	effect_range: int = IntegerField(70, 2) # leszekd25
 
 	#name: str = Relation('localisation', {'text_id': 'name_id', 'language': Language.ENGLISH}, attributes=['text'])
-	name: str = Relation('spell_names', {'spell_name_id': 'spell_name_id'}, attributes=['text'])
+	name: str = Relation('spell_names', {'spell_name_id': 'spell_name_id'}, attributes=['name'])
 	level: int = Alias('req1_level')
+	effects: list[int] = Relation('spell_effects', {'spell_item_id': 'spell_id'}, attributes=['effect_id'], multiple=True)
 
 
 class CreatureSpell(Entity):
@@ -391,7 +392,7 @@ class CreatureSkill(Entity):
 	# Hokan-Ashir: creatures/skills/CreatureSkillObject.java
 
 	stats_id: int = IntegerField(0 ,2)
-	skill_school: SchoolRequirement = EnumField(2, 2)
+	skill_school: School = EnumField(2, 2)
 	#skill_school_class: int = IntegerField(2, 1)
 	#skill_school_sub: int = IntegerField(3, 1)
 	skill_level: int = IntegerField(4, 1)
@@ -463,6 +464,7 @@ class Armor(Entity):
 	speed_fight: int = SignedIntegerField(32, 2)
 	speed_cast: int = SignedIntegerField(34, 2)
 
+	item: 'Item' = Relation('items', {'item_id': 'item_id'})
 	requirements: list[ItemRequirement] = Relation('item_requirements', {'item_id': 'item_id'}, multiple=True)
 
 	def info(self):
@@ -588,6 +590,9 @@ class Weapon(Entity):
 	speed: int = IntegerField(10, 2)
 	weapon_type: int = IntegerField(12, 2)
 	material: int = IntegerField(14, 2)
+
+	item: Item = Relation('items', {'item_id': 'item_id'})
+	effects: list[int] = Relation('item_effects', {'item_id': 'item_id'}, attributes=['effect_id'], multiple=True)
 
 
 class CreatureResourceRequirement(Entity):

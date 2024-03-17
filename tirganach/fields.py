@@ -105,7 +105,7 @@ class EnumField(Field):
 			# val will also be in source.value
 		else:
 			assert isinstance(source, self.data_type)
-		if issubclass(self.data_type, enum.Flag):
+		if isinstance(source, enum.Flag):
 			source_value = [source.value]
 		else:
 			source_value = source.value
