@@ -1,5 +1,6 @@
+import hashlib
 from os import PathLike
-from typing import Type, IO, get_origin, get_args, TypeVar, Generic
+from typing import Type, get_origin, get_args, TypeVar, Generic
 
 from tirganach.entities import Armor, Localisation, Entity, ItemRequirement, Building, BuildingRequirement, Creature, \
 	CreatureStats, CreatureResourceRequirement, CreatureEquipment, CreatureSkill, Item, CreatureSpell, Spell, HeroSpell, \
@@ -23,17 +24,19 @@ class Table(list[T], Generic[T]):
 		self.entity_type = entity_type
 		self._game_data = game_data
 
+		offset = 0
+
 		# we read the header here again, just for cleaner structure (rather than passing the info to the init)
 		header = raw_bytes[0:12]
 		self._header = header
+		offset += 12
+
 		table_size_bytes = int.from_bytes(header[6: 10], byteorder='little', signed=False)
 		table_row_length = entity_type._length()
 		table_size_rows = int(table_size_bytes / table_row_length)
 		assert table_size_rows == (table_size_bytes / table_row_length)
-
 		super().__init__([None] * table_size_rows)
 
-		offset = 12
 		for idx in range(0, table_size_rows):
 			new_instance: entity_type = entity_type(raw_bytes[offset:offset+table_row_length])
 			new_instance._game_data = self._game_data
@@ -47,11 +50,14 @@ class Table(list[T], Generic[T]):
 	def _to_bytes(self):
 		table_row_length = self.entity_type._length()
 
+		offset = 0
 		result = bytearray()
+
+		# header
 		self._header[6: 10] = (len(self) * table_row_length).to_bytes(length=4, byteorder='little', signed=False)
 		result += self._header
+		offset += 12
 
-		offset = 12
 		for row in self:
 			assert isinstance(row, self.entity_type)
 			result += row._to_bytes()
@@ -59,6 +65,9 @@ class Table(list[T], Generic[T]):
 			assert len(result) == offset
 
 		return result
+
+	def _to_hex(self):
+		return ' '.join(format(byte, '02x') for byte in self._to_bytes())
 
 	def __repr__(self):
 		return f"<[Table] {self.entity_type.__name__}>"
@@ -104,7 +113,7 @@ class GameData:
 	_header: bytearray
 	_offsets: dict = {}
 	_length: int = None
-	_md5: str
+	_md5: str = None
 
 	spells: Table[Spell]
 	spell_names: Table[SpellName]
@@ -156,6 +165,17 @@ class GameData:
 	upgrades: Table[Upgrade]
 	item_sets: Table[ItemSet]
 
+	def table_info(self):
+		return {name: annot for name, annot in self.__annotations__.items() if get_origin(annot) is Table}
+
+	def tables(self):
+		return {name: getattr(self, name) for name in self.table_info()}
+
+	def get_table(self, entity_type: Type[Entity]) -> Table[Entity]:
+		for name, annot in self.table_info().items():
+			if get_args(annot)[0] is entity_type:
+				return self.tables()[name]
+
 	def __init__(self, from_input: bytes | str | PathLike[bytes]):
 		if isinstance(from_input, PathLike) or isinstance(from_input, str):
 			with open(from_input, 'rb') as fd:
@@ -166,16 +186,18 @@ class GameData:
 		raw = bytearray(raw)
 		if self._length:
 			assert self._length == len(raw)
+		if self._md5:
+			hsh = hashlib.md5()
+			hsh.update(raw)
+			assert hsh.hexdigest() == self._md5
 		offset = 0
 
 		# header
 		self._header = raw[0:20]
 		offset += 20
 
-		table_definitions = {name: annot for name, annot in self.__annotations__.items() if get_origin(annot) is Table}
-		# guaranteed in correct order, PEP 468
-
-		for table_name, table_definition in table_definitions.items():
+		for table_name, table_definition in self.table_info().items():
+			# guaranteed in correct order, PEP 468
 
 			table_entity_type: Type[Entity] = get_args(table_definition)[0]
 
@@ -200,13 +222,11 @@ class GameData:
 		offset = 0
 		result = bytearray()
 
-		#file header
+		#header
 		result += self._header
 		offset += 20
 
-		table_definitions = {name: annot for name, annot in self.__annotations__.items() if get_origin(annot) is Table}
-
-		for table_name, table_definition in table_definitions.items():
+		for table_name, table_definition in self.table_info().items():
 			table_entity_type: Type[Entity] = get_args(table_definition)[0]
 			table_instance: Table = getattr(self, table_name)
 			table_raw = table_instance._to_bytes()
@@ -220,25 +240,14 @@ class GameData:
 		with open(filename, 'wb') as fd:
 			fd.write(self._to_bytes())
 
-	def debug_definition_range(self):
-		block_size = 1024 * 256
-		bytes_accounted = [False] * self._length
-		for tabletype, offset, length in self.fields.values():
-			for byte in range(offset, offset + (get_args(tabletype)[0]._length() * length)):
-				bytes_accounted[byte] = True
-		blocks = [0] * round(self._length / block_size)
-		for blockindex in range(len(blocks)):
-			for byteindex in range(blockindex*block_size, (blockindex+1)*block_size):
-				if bytes_accounted[byteindex]:
-					blocks[blockindex] = True
-					break
 
-		print(''.join(('1' if a else '0') for a in blocks))
-
+# gamedatas from different versions aren't actually structurally different, so we can just use the base class to load
+# these classes are now here to specifiy information about the vanilla files (in order to verify integrity)
 
 class GameData154(GameData):
 	_length = 66859922
 
+	# these are for the table bodies, not the header!
 	_offsets = {
 		'spells': 0x20,
 		'spell_names': 0x3fd20,
@@ -291,21 +300,18 @@ class GameData154(GameData):
 		'item_sets': 0x3fc3346,
 	}
 
+
 class GameData154EN(GameData154):
 	_md5 = '4a5025f4cc40aab46efde848e2a4682d'
 
+
 class GameData154RU(GameData154):
 	_md5 = 'c09948dc3e9e2908383f844ec2b4a976'
+
 
 class GameData154PL(GameData154):
 	_md5 = '7c1d33607b8920440b28c75d0db9c4ae'
 
 
-# TODO figure out of this is consistent across versions, with just different table sizes, then we can get rid of those definitions
 class GameData161(GameData):
 	_length = 66859988
-
-	#items: Table[Armor] = TableDefinition(Armor, 0x8a71d),
-	#localisation: Table[Localisation] = TableDefinition(Localisation, 0x12f2e3),
-	#item_requirements: Table[ItemRequirement] = TableDefinition(ItemRequirement, 0x99e21),
-	#buildings: Table[Building] = TableDefinition(Building, 0x3f81c94)
