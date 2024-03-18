@@ -49,3 +49,9 @@ for rune in gd.items.where(item_type=ItemType.RUNE_INVENTORY, item_subtype=RuneR
 
 gd.save("/games/SpellForce/data/GameData.cff")
 ```
+
+Compare two versions:
+
+```shell
+python -m tirganach.compare GameData.cff GameData_patched.cff
+```
