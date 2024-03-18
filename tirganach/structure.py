@@ -12,7 +12,7 @@ T = TypeVar('T', bound=Entity)
 
 
 class Table(list[T], Generic[T]):
-	_raw: bytearray
+	_header: bytearray
 	_game_data: 'GameData'
 
 	offset: int
@@ -20,12 +20,12 @@ class Table(list[T], Generic[T]):
 	entity_index: dict[tuple, Entity] = None
 
 	def __init__(self, raw_bytes: bytes | bytearray, entity_type: Type[Entity], game_data: 'GameData'):
-		self._raw = bytearray(raw_bytes)
 		self.entity_type = entity_type
 		self._game_data = game_data
 
 		# we read the header here again, just for cleaner structure (rather than passing the info to the init)
-		header = self._raw[0:12]
+		header = raw_bytes[0:12]
+		self._header = header
 		table_size_bytes = int.from_bytes(header[6: 10], byteorder='little', signed=False)
 		table_row_length = entity_type._length()
 		table_size_rows = int(table_size_bytes / table_row_length)
@@ -35,7 +35,7 @@ class Table(list[T], Generic[T]):
 
 		offset = 12
 		for idx in range(0, table_size_rows):
-			new_instance: entity_type = entity_type(self._raw[offset:offset+table_row_length])
+			new_instance: entity_type = entity_type(raw_bytes[offset:offset+table_row_length])
 			new_instance._game_data = self._game_data
 			self[idx] = new_instance
 			offset += table_row_length
@@ -47,15 +47,18 @@ class Table(list[T], Generic[T]):
 	def _to_bytes(self):
 		table_row_length = self.entity_type._length()
 
-		self._raw[6: 10] = (len(self) * table_row_length).to_bytes(length=4, byteorder='little', signed=False)
+		result = bytearray()
+		self._header[6: 10] = (len(self) * table_row_length).to_bytes(length=4, byteorder='little', signed=False)
+		result += self._header
 
 		offset = 12
 		for row in self:
 			assert isinstance(row, self.entity_type)
-			self._raw[offset: offset+table_row_length] = row._to_bytes()
+			result += row._to_bytes()
 			offset += table_row_length
+			assert len(result) == offset
 
-		return self._raw
+		return result
 
 	def __repr__(self):
 		return f"<[Table] {self.entity_type.__name__}>"
@@ -98,9 +101,8 @@ class TableDefinition:
 
 
 class GameData:
-	#fields: dict[str, tuple[Type[Entity], int]] = {}
-	raw: bytearray
-	offsets: dict = {}
+	_header: bytearray
+	_offsets: dict = {}
 	_length: int = None
 	_md5: str
 
@@ -161,12 +163,13 @@ class GameData:
 		else:
 			raw = from_input
 
-		self.raw = bytearray(raw)
+		raw = bytearray(raw)
 		if self._length:
-			assert self._length == len(self.raw)
+			assert self._length == len(raw)
 		offset = 0
 
-		#skip file header
+		# header
+		self._header = raw[0:20]
 		offset += 20
 
 		table_definitions = {name: annot for name, annot in self.__annotations__.items() if get_origin(annot) is Table}
@@ -177,39 +180,41 @@ class GameData:
 			table_entity_type: Type[Entity] = get_args(table_definition)[0]
 
 			# need to already read the header so we know how many bytes to send to the table init
-			table_header = self.raw[offset: offset+12]
+			table_header = raw[offset: offset+12]
 			table_size_bytes = int.from_bytes(table_header[6: 10], byteorder='little', signed=False)
 
 			offset += 12
-			if table_name in self.offsets:
-				assert offset == self.offsets[table_name]
-			table_body = self.raw[offset: offset+table_size_bytes]
+			if table_name in self._offsets:
+				assert offset == self._offsets[table_name]
+			table_body = raw[offset: offset+table_size_bytes]
 			table = Table(raw_bytes=table_header + table_body, entity_type=table_entity_type, game_data=self)
 
 			offset += table_size_bytes
 
 			setattr(self, table_name, table)
 
-		assert offset == len(self.raw)
+		assert offset == len(raw)
 
 	def _to_bytes(self):
 
 		offset = 0
+		result = bytearray()
 
-		#skip file header
+		#file header
+		result += self._header
 		offset += 20
 
-		table_definitions = self.__annotations__
+		table_definitions = {name: annot for name, annot in self.__annotations__.items() if get_origin(annot) is Table}
 
 		for table_name, table_definition in table_definitions.items():
 			table_entity_type: Type[Entity] = get_args(table_definition)[0]
 			table_instance: Table = getattr(self, table_name)
 			table_raw = table_instance._to_bytes()
-			self.raw[offset: offset+len(table_raw)] = table_raw
-
+			result += table_raw
 			offset += len(table_raw)
+			assert offset == len(result)
 
-		return bytes(self.raw)
+		return bytes(result)
 
 	def save(self, filename):
 		with open(filename, 'wb') as fd:
@@ -234,7 +239,7 @@ class GameData:
 class GameData154(GameData):
 	_length = 66859922
 
-	offsets = {
+	_offsets = {
 		'spells': 0x20,
 		'spell_names': 0x3fd20,
 		'unknown3': 0x44205,
