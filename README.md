@@ -6,14 +6,14 @@ Information about the file structure was gathered from
 
 If you're here to reverse engineer the file / create your own library, have a look at [this short explanation](./EXPLANATION.md).
 
-Here's how you use `tirganach`.
+Here's how you use `tirganach`:
 
 ```python
-from tirganach import GameData154
+from tirganach import GameData
 from tirganach.types import *
 import random
 
-gd = GameData154('/games/SpellForce/data/GameData.cff')
+gd = GameData('/games/SpellForce/data/GameData.cff')
 
 # let's make a cool item
 ring = gd.armor.where(item_id=7065)[0]

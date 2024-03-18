@@ -19,8 +19,10 @@ class Entity:
 			self.__setattr__(field_name, val)
 
 	def __repr__(self):
-		if hasattr(self, 'name'):
+		if hasattr(self, 'name') and self.name:
 			return f"<[{self.__class__.__name__}] {self.name}>"
+		elif hasattr(self, 'name_any') and self.name_any:
+			return f"<[{self.__class__.__name__}] {self.name_any}>"
 		else:
 			return f"<[{self.__class__.__name__}]>"
 
@@ -435,7 +437,7 @@ class CreatureStats(Entity):
 
 	skills: list[CreatureSkill] = Relation('creature_skills', {'stats_id': 'stats_id'}, multiple=True)
 	spells: list[CreatureSpell] = Relation('creature_spells', {'creature_id': 'stats_id'}, multiple=True)
-	hero_spells: list[CreatureSpell] = Relation('hero_spells', {'stats_id': 'stats_id'}, multiple=True)
+	hero_spells: list[HeroSpell] = Relation('hero_spells', {'stats_id': 'stats_id'}, multiple=True)
 	# todo are these connected to stats or creature?
 
 
@@ -555,7 +557,7 @@ class Item(Entity):
 	item_subtype: RuneRace | EquipmentType = EnumField(3, 1, type_decider='item_type')
 	name_id: int = IntegerField(4, 2)
 	unit_stats_id: int = IntegerField(6, 2)
-	army_stats_id: int = IntegerField(8, 2)
+	army_unit_id: int = IntegerField(8, 2)
 	building_id: int = IntegerField(10, 2)
 	unknown1: int = IntegerField(12, 1)
 	selling_price: int = IntegerField(13, 4)
@@ -563,9 +565,10 @@ class Item(Entity):
 	item_set_id: int = IntegerField(21, 1)
 
 	unit_stats: CreatureStats = Relation('creature_stats', {'stats_id': 'unit_stats_id'})
-	army_stats: CreatureStats = Relation('creature_stats', {'stats_id': 'army_stats_id'})
+	army_unit: 'Creature' = Relation('creatures', {'creature_id': 'army_unit_id'})
 	building: Building = Relation('buildings', {'building_id': 'building_id'})
 	name: str = Relation('localisation', {'text_id': 'name_id', 'language': Language.ENGLISH}, attributes=['text'])
+	name_any: str = Relation('localisation', {'text_id': 'name_id'}, attributes=['text'])
 	inventory_match: 'Item' = Relation('item_installs', {'installed_item_id': 'item_id'}, attributes=['inventory_item'])
 	installed_match: 'Item' = Relation('item_installs', {'inventory_item_id': 'item_id'}, attributes=['installed_item'])
 
@@ -613,6 +616,7 @@ class CreatureEquipment(Entity):
 	equipment_slot: EquipmentSlot = EnumField(2, 1)
 	item_id: int = IntegerField(3, 2)
 
+	creature: 'Creature' = Relation('creatures', {'creature_id': 'creature_id'})
 	item: Item = Relation('items', {'item_id': 'item_id'})
 
 
@@ -666,8 +670,10 @@ class Creature(Entity):
 	equipment: list[CreatureEquipment] = Relation('creature_equipment', {'creature_id': 'creature_id'}, multiple=True)
 
 	skills: list[CreatureSkill] = Relation('creature_skills', {'stats_id': 'creature_id'}, multiple=True)
-	spells: list[CreatureSpell] = Relation('creature_spells', {'creature_id': 'stats_id'}, multiple=True)
+	spells: list[CreatureSpell] = Relation('creature_spells', {'creature_id': 'creature_id'}, multiple=True)
 	# todo are these connected to stats or creature?
+
+	# todo how do we match the description? e.g. elf healer is creature 547 (23 02), has advanced description 386 (82 01)
 
 	def info(self):
 		stats = self.stats

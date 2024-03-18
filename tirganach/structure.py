@@ -67,6 +67,8 @@ class Table(list[T], Generic[T]):
 				result = self.entity_index.get(ordered_pkeyvals)
 				if result:
 					return [result]
+				else:
+					return []
 
 		return [e for e in self if all(getattr(e, k) == v for k, v in kwargs.items())]
 
