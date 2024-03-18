@@ -1,5 +1,5 @@
 from .types import School, Language, Race, Resource, SlotConfiguration, Gender, EquipmentSlot, ItemType, \
-	EquipmentType, RuneRace, RaceFlags
+	EquipmentType, RuneRace, RaceFlags, CultivationFlags
 from .fields import Field, IntegerField, StringField, BoolField, EnumField, SignedIntegerField, Relation, Alias
 
 
@@ -685,3 +685,144 @@ class Creature(Entity):
 			'requirements': {r.resource.name: r.resource_amount for r in self.requirements},
 			'equipment': {e.equipment_slot.name: e.item_id for e in self.equipment}
 		}
+
+
+class CreatureDrop(Entity):
+	# leszekd25: Control22.cs
+	# Hokan-Ashir: creatures/corpseloot/CreatureCorpseLootTableService.java
+
+	creature_id: int = IntegerField(0, 2)
+	slot_index: int = IntegerField(2, 1)
+	item1_id: int = IntegerField(3, 2)
+	item1_chance: int = IntegerField(5, 1)
+	item2_id: int = IntegerField(6, 2)
+	item2_chance: int = IntegerField(8, 1)
+	item3_id: int = IntegerField(9, 2)
+
+	item1: Item = Relation('items', {'item_id': 'item1_id'})
+	item2: Item = Relation('items', {'item_id': 'item2_id'})
+	item3: Item = Relation('items', {'item_id': 'item3_id'})
+	creature: Creature = Relation('creature', {'creature_id': 'creature_id'})
+
+
+class MerchantPriceMultiplier(Entity):
+	# leszekd25: Control31.cs
+
+	merchant_inventory_id: int = IntegerField(0, 2)
+	item_type: ItemType = EnumField(2, 1)
+	price_multiplier: int = IntegerField(3, 2)
+
+	inventory: 'MerchantInventory' = Relation('merchant_inventories', {'merchant_inventory_id': 'merchant_inventory_id'})
+
+
+class MerchantInventoryItem(Entity):
+	# leszekd25: Control30.cs
+	# Hokan-Ashir: merchants/items/MerchantInventoryItemsObject.java
+
+	merchant_inventory_id: int = IntegerField(0, 2)
+	item_id: int = IntegerField(2, 2)
+	item_quantity: int = IntegerField(4, 2) # or type?
+
+	inventory: 'MerchantInventory' = Relation('merchant_inventories', {'merchant_inventory_id': 'merchant_inventory_id'})
+	item: Item = Relation('items', {'item_id': 'item_id'})
+
+
+class MerchantInventory(Entity):
+	# leszekd25: Control29.cs
+	# Hokan-Ashir: merchants/inventory/MerchantInventoryObject.java
+
+	merchant_inventory_id: int = IntegerField(0, 2)
+	creature_id: int = IntegerField(2, 2)
+
+	merchant: Creature = Relation('creatures', {'creature_id': 'creature_id'})
+	items: list[Item] = Relation('merchant_inventory_items', {'merchant_inventory_id': 'merchant_inventory_id'}, multiple=True)
+	price_multipliers: list[MerchantPriceMultiplier] = Relation('merchant_price_multipliers', {'merchant_inventory_id': 'merchant_inventory_id'}, multiple=True)
+
+
+class ObjectLoot(Entity):
+	# leszekd25: Control36.cs
+	# Hokan-Ashir: objects/chests/ChestCorpseLootObject.java
+
+	object_id: int = IntegerField(0, 2)
+	slot_index: int = IntegerField(2, 1)
+	item1_id: int = IntegerField(3, 2)
+	item1_chance: int = IntegerField(5, 1)
+	item2_id: int = IntegerField(6, 2)
+	item2_chance: int = IntegerField(8, 1)
+	item3_id: int = IntegerField(9, 2)
+
+	item1: Item = Relation('items', {'item_id': 'item1_id'})
+	item2: Item = Relation('items', {'item_id': 'item2_id'})
+	item3: Item = Relation('items', {'item_id': 'item3_id'})
+	object: 'Object' = Relation('objects', {'object_id': 'object_id'})
+
+
+class Object(Entity): # most descriptive naming
+	# leszekd25: Control34.cs
+
+	_custom_length = 54
+
+	object_id: int = IntegerField(0, 2)
+	name_id: int = IntegerField(2, 2)
+	flags: int = IntegerField(4, 1)
+	flatten_mode: int = IntegerField(5, 1)
+	collision_polygons: int = IntegerField(6, 1)
+	object_handle: str = StringField(7, 40)
+	resource_amount: int = IntegerField(47, 2)
+	width: int = IntegerField(49, 2)
+	height: int = IntegerField(51, 2)
+
+	name: str = Relation('localisation', {'text_id': 'name_id', 'language': Language.ENGLISH}, attributes=['text'])
+	loot: list[ObjectLoot] = Relation('object_loot', {'object_id': 'object_id'}, multiple=True)
+
+
+class Terrain(Entity):
+	# leszekd25: Control46.cs
+
+	terrain_id: int = IntegerField(0, 2)
+	block_value: int = IntegerField(2, 1)
+	cultivation_flags: CultivationFlags = EnumField(3, 1)
+
+
+class BuildingGraphics(Entity):
+	# leszekd25: Control25.cs
+
+	_custom_length = 4
+
+	# length of the table is only divisible by 2 or 4
+	# leszekds definition doesnt seem to work
+	# missing something here, no idea
+
+
+class ObjectGraphics(Entity):
+	# leszekd25: Control35.cs
+
+	_custom_length = 3
+
+	# same story, length is only div by 3
+	# so the definition doesnt check out
+
+
+class Head(Entity): # ???
+	# leszekd25: Control17.cs
+
+	_custom_length = 3
+
+
+class Unknown3(Entity):
+	# leszekd25: Control3.cs
+
+	_custom_length = 6
+
+
+class Unknown40(Entity):
+	# leszekd25: Control40.cs
+
+	_custom_length = 6
+
+
+class Unknown47(Entity):
+	# leszekd25: Control47.cs
+	# this literally just counts up
+
+	index: int = IntegerField(0, 2)
