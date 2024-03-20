@@ -1,7 +1,7 @@
 import enum
 import types
 from enum import Enum
-from typing import Type
+from typing import Type, Callable
 
 from tirganach.types import UnknownEnumMember
 
@@ -116,26 +116,33 @@ class EnumField(Field):
 
 class Relation:
 	mapping: dict
+	fallback_mapping: dict
 	target_table: str
 	multiple: bool
 	attributes: list
+	sort: Callable
 
 	# todo: assign object directly to relation -> sets reference id
 
-	def __init__(self, table_name: str, mapping: dict, multiple=False, attributes=[]):
+	def __init__(self, table_name: str, mapping: dict, fallback_mapping: dict = None, multiple=False, sort=None, attributes=None):
 		self.table_name = table_name
 		self.mapping = mapping
+		self.fallback_mapping = fallback_mapping or {}
 		self.multiple = multiple
-		self.attributes = attributes
+		self.attributes = attributes or []
+		self.sort = sort
 
 	def __get__(self, instance, owner):
 		if not instance: return None
 
 		result = self._get_proxied(instance)
+		if self.sort and len(result) > 1:
+			result = sorted(result, key=self.sort)
 		for key in self.attributes:
 			result = [getattr(r, key) for r in result]
 		if not result:
 			return None
+
 		if not self.multiple:
 			result = result[0]
 		return result
@@ -159,14 +166,16 @@ class Relation:
 
 		gd = instance._game_data
 		table = getattr(gd, self.table_name)
-		instanced_mapping = {}
-		for k,v in self.mapping.items():
-			if isinstance(v, str):
-				instanced_mapping[k] = getattr(instance, v)
-			else:
-				instanced_mapping[k] = v
-		result = table.where(**instanced_mapping)
-		return result
+		for mapping in (self.mapping, self.fallback_mapping):
+			instanced_mapping = {}
+			for k, v in mapping.items():
+				if isinstance(v, str):
+					instanced_mapping[k] = getattr(instance, v)
+				else:
+					instanced_mapping[k] = v
+			result = table.where(**instanced_mapping)
+			if result: return result
+		return []
 
 
 class Alias:

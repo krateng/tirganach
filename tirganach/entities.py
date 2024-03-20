@@ -93,7 +93,7 @@ class Description(Entity):
 	description_id: int = IntegerField(0, 2)
 	text_id: int = IntegerField(2, 2)
 
-	text: str = Relation('localisation', {'text_id': 'text_id', 'language': Language.ENGLISH}, attributes=['text'])
+	text: str = Relation('localisation', {'text_id': 'text_id', 'language': Language.ENGLISH}, fallback_mapping={'text_id': 'text_id'}, attributes=['text'])
 
 
 class AdvancedDescription(Entity):
