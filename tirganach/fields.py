@@ -38,6 +38,16 @@ class Field:
 		raise NotImplemented()
 
 
+class ByteField(Field):
+	data_type = bytes
+
+	def parse_bytes(self, byte_source: bytes, parent_entity=None):
+		return byte_source
+
+	def dump_bytes(self, source):
+		return source
+
+
 class IntegerField(Field):
 	data_type = int
 	signed: bool = False

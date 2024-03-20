@@ -40,8 +40,7 @@ class Table(list[T], Generic[T]):
 		super().__init__([None] * table_size_rows)
 
 		for idx in range(0, table_size_rows):
-			new_instance: entity_type = entity_type(raw_bytes[offset:offset+table_row_length])
-			new_instance._game_data = self._game_data
+			new_instance: entity_type = entity_type(raw_bytes[offset:offset+table_row_length], game_data=self._game_data)
 			self[idx] = new_instance
 			offset += table_row_length
 

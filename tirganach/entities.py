@@ -5,18 +5,22 @@ from .fields import Field, IntegerField, StringField, BoolField, EnumField, Sign
 
 class Entity:
 	_fields: dict[str, Field]
+	_game_data = None
 	_custom_length: int = None
 	_primary: tuple[str] = None
 	_raw: bytes
 
-	def __init__(self, raw_bytes):
-		self._raw = raw_bytes
+	def __init__(self, raw_bytes, game_data, **kwargs):
+		self._raw = raw_bytes or b'\x00' * self._length()
+		self._game_data = game_data
 		assert len(raw_bytes) == self._length()
 		#print("IN:", ' '.join(format(byte, '02x') for byte in raw_bytes))
 		for field_name, field_info in self._fields.items():
 			byte_source = raw_bytes[field_info.offset:field_info.offset+field_info.len_bytes]
 			val = field_info.parse_bytes(byte_source, parent_entity=self)
 			self.__setattr__(field_name, val)
+		for k, v in kwargs.items():
+			self.__setattr__(k, v)
 
 	def __repr__(self):
 		if hasattr(self, 'name') and self.name:
@@ -61,6 +65,9 @@ class Entity:
 	def set(self, **kwargs):
 		for k, v in kwargs.items():
 			setattr(self, k, v)
+
+	def clone(self):
+		return self.__class__(self._to_bytes(), game_data=self._game_data)
 
 
 # credit to
