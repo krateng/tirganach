@@ -21,8 +21,6 @@ class Entity:
 	def __repr__(self):
 		if hasattr(self, 'name') and self.name:
 			return f"<[{self.__class__.__name__}] {self.name}>"
-		elif hasattr(self, 'name_any') and self.name_any:
-			return f"<[{self.__class__.__name__}] {self.name_any}>"
 		else:
 			return f"<[{self.__class__.__name__}]>"
 
@@ -46,7 +44,7 @@ class Entity:
 
 	def __init_subclass__(cls):
 		# save info in _fields
-		cls._fields = {}
+		cls._fields: dict[str, Field] = {}
 		for field_name, field_type in cls.__annotations__.items():
 			if isinstance(getattr(cls, field_name), Field):
 				cls._fields[field_name] = getattr(cls, field_name)
@@ -78,19 +76,18 @@ class Localisation(Entity):
 	# leszekd25: Control15.cs
 	# Hokan-Ashir: text/TextObject.java
 
-	_primary = 'text_id', 'language'
-
-	text_id: int = IntegerField(0, 2)
+	text_id: int = IntegerField(0, 2, primary=True)
 	#language_id: int = IntegerField(2, 1)
-	language: Language = EnumField(2, 1)
+	language: Language = EnumField(2, 1, primary=True)
 	is_dialogue: bool = BoolField(3, 1)
 	dialogue_name: str = StringField(4, 50)
 	text: str = StringField(54, 512)
 
+
 class Description(Entity):
 	# leszekd25: Control41.cs
 
-	description_id: int = IntegerField(0, 2)
+	description_id: int = IntegerField(0, 2, primary=True)
 	text_id: int = IntegerField(2, 2)
 
 	text: str = Relation('localisation', {'text_id': 'text_id', 'language': Language.ENGLISH}, fallback_mapping={'text_id': 'text_id'}, attributes=['text'])
@@ -99,7 +96,7 @@ class Description(Entity):
 class AdvancedDescription(Entity):
 	# leszekd25: Control42.cs
 
-	description_id: int = IntegerField(0, 2)
+	description_id: int = IntegerField(0, 2, primary=True)
 	text_id: int = IntegerField(2, 2)
 	advanced_text_id: int = IntegerField(4, 2)
 
@@ -111,7 +108,7 @@ class ResourceName(Entity):
 	# leszekd25: Control32.cs
 
 	#resource_id: int = IntegerField(0, 1)
-	resource: Resource = EnumField(0, 1)
+	resource: Resource = EnumField(0, 1, primary=True)
 	text_id: int = IntegerField(1, 2)
 
 	name = Relation('localisation', {'text_id': 'text_id', 'language': Language.ENGLISH}, attributes=['text'])
@@ -120,7 +117,7 @@ class ResourceName(Entity):
 class WeaponTypeName(Entity):
 	# leszekd25: Control44.cs
 
-	weapon_type_id: int = IntegerField(0, 2)
+	weapon_type_id: int = IntegerField(0, 2, primary=True)
 	text_id: int = IntegerField(2, 2)
 	unknown: int = IntegerField(4, 1)
 
@@ -130,7 +127,7 @@ class WeaponTypeName(Entity):
 class WeaponMaterialName(Entity):
 	# leszekd25: Control45.cs
 
-	weapon_material_id: int = IntegerField(0, 2)
+	weapon_material_id: int = IntegerField(0, 2, primary=True)
 	text_id: int = IntegerField(2, 2)
 
 	name = Relation('localisation', {'text_id': 'text_id', 'language': Language.ENGLISH}, attributes=['text'])
@@ -140,7 +137,7 @@ class Level(Entity):
 	# leszekd25: Control33.cs
 	# Hokan-Ashir: player/level/stats/PlayerLevelStatsObject.java
 
-	level: int = IntegerField(0, 1)
+	level: int = IntegerField(0, 1, primary=True)
 	health_factor: int = IntegerField(1, 2)
 	mana_factor: int = IntegerField(3, 2)
 	exp_required: int = IntegerField(5, 4)
@@ -153,7 +150,7 @@ class Level(Entity):
 class NPCName(Entity):
 	# leszekd25: Control37.cs
 
-	npc_id: int = IntegerField(0, 4)
+	npc_id: int = IntegerField(0, 4, primary=True)
 	name_id: int = IntegerField(4, 2)
 
 	name = Relation('localisation', {'text_id': 'name_id', 'language': Language.ENGLISH}, attributes=['text'])
@@ -162,7 +159,7 @@ class NPCName(Entity):
 class Map(Entity):
 	# leszekd25: Control38.cs
 
-	map_id: int = IntegerField(0, 4)
+	map_id: int = IntegerField(0, 4, primary=True)
 	map_handle: str = StringField(5, 64)
 	name_id: str = IntegerField(69, 2) # this works for some, leads to complete nonsense localisation for others???
 
@@ -173,7 +170,7 @@ class Map(Entity):
 class Portal(Entity):
 	# leszekd25: Control39.cs
 
-	portal_id: int = IntegerField(0, 2)
+	portal_id: int = IntegerField(0, 2, primary=True)
 	map_id: int = IntegerField(2, 4)
 	position_x: int = IntegerField(6, 2)
 	position_y: int = IntegerField(8, 2)
@@ -186,7 +183,7 @@ class Portal(Entity):
 class Quest(Entity):
 	# leszekd25: Control43.cs
 
-	quest_id: int = IntegerField(0, 4)
+	quest_id: int = IntegerField(0, 4, primary=True)
 	parent_quest_id: int = IntegerField(4, 4)
 	name_id: int = IntegerField(9, 2)
 	description_id: int = IntegerField(11, 2)
@@ -204,7 +201,7 @@ class Quest(Entity):
 class RaceDB(Entity):
 	# leszekd25: Control16.cs
 
-	race_id: int = IntegerField(0, 1)
+	race_id: int = IntegerField(0, 1, primary=True)
 	range1: int = IntegerField(1, 1)
 	range2: int = IntegerField(2, 1)
 	range3: int = IntegerField(3, 1)
@@ -296,9 +293,8 @@ class SpellName(Entity):
 	# Hokan-Ashir: spells/names/SpellNameObject.java (sort of)
 
 	_custom_length = 75
-	_primary = 'spell_name_id',
 
-	spell_name_id: int = IntegerField(0, 2)
+	spell_name_id: int = IntegerField(0, 2, primary=True)
 	text_id: int = IntegerField(2, 2)
 	spell_flags: int = IntegerField(4, 1)
 	magic_type: int = IntegerField(5, 1)
@@ -326,9 +322,8 @@ class Spell(Entity):
 	# Hokan-Ashir: spells/parameters/SpellParametersObject.java
 
 	_custom_length = 76
-	_primary = 'spell_id',
 
-	spell_id: int = IntegerField(0, 2)
+	spell_id: int = IntegerField(0, 2, primary=True)
 	spell_name_id: int = IntegerField(2, 2)
 	#spell_name: SpellName = EnumField(2, 2)
 	req1_class: School = EnumField(4, 2)
@@ -404,9 +399,7 @@ class CreatureStats(Entity):
 	# leszekd25: Control4.cs
 	# HokanAshir: creatures/parameters/CreatureParameterObject.java
 
-	_primary = 'stats_id',
-
-	stats_id: int = IntegerField(0, 2)
+	stats_id: int = IntegerField(0, 2, primary=True)
 	level: int = IntegerField(2, 2)
 	race: Race = EnumField(4, 1)
 	agility: int = IntegerField(5, 2)
@@ -445,9 +438,7 @@ class Armor(Entity):
 	# leszekd25: Control8.cs
 	# Hokan-Ashir: items/armor/parameters/ArmorParametersObject.java
 
-	_primary = 'item_id',
-
-	item_id: int = IntegerField(0, 2)
+	item_id: int = IntegerField(0, 2, primary=True)
 	strength: int = SignedIntegerField(2, 2)
 	stamina: int = SignedIntegerField(4, 2)
 	agility: int = SignedIntegerField(6, 2)
@@ -504,9 +495,8 @@ class Building(Entity):
 	# Hokan-Ashir: buildings/common/BuildingsObject.java
 
 	_custom_length = 23
-	_primary = 'building_id',
 
-	building_id: int = IntegerField(0, 2)
+	building_id: int = IntegerField(0, 2, primary=True)
 	#race_id: int = IntegerField(2, 1)
 	race: Race = EnumField(2, 1)
 	enter_slot: int = IntegerField(3, 1)
@@ -538,7 +528,7 @@ class Building(Entity):
 class ItemSet(Entity):
 	# leszekd25: Control49.cs
 
-	set_id: int = IntegerField(0, 1)
+	set_id: int = IntegerField(0, 1, primary=True)
 	text_id: int = IntegerField(1, 2)
 	set_type: int = IntegerField(3, 1)
 
@@ -549,9 +539,7 @@ class Item(Entity):
 	# leszekd25: Control7.cs
 	# Hokan-Ashir: items/price/parameters/ItemPriceParametersObject.java
 
-	_primary = 'item_id',
-
-	item_id: int = IntegerField(0, 2)
+	item_id: int = IntegerField(0, 2, primary=True)
 	#type_id: int = IntegerField(2, 2)
 	item_type: ItemType = EnumField(2, 1)
 	item_subtype: RuneRace | EquipmentType = EnumField(3, 1, type_decider='item_type')
@@ -568,7 +556,6 @@ class Item(Entity):
 	army_unit: 'Creature' = Relation('creatures', {'creature_id': 'army_unit_id'})
 	building: Building = Relation('buildings', {'building_id': 'building_id'})
 	name: str = Relation('localisation', {'text_id': 'name_id', 'language': Language.ENGLISH}, attributes=['text'])
-	name_any: str = Relation('localisation', {'text_id': 'name_id'}, attributes=['text'])
 	inventory_match: 'Item' = Relation('item_installs', {'installed_item_id': 'item_id'}, attributes=['inventory_item'])
 	installed_match: 'Item' = Relation('item_installs', {'inventory_item_id': 'item_id'}, attributes=['installed_item'])
 
@@ -585,7 +572,7 @@ class Weapon(Entity):
 	# leszekd25: Control10.cs
 	# Hokan-Ashir: items/weapon/parameters/WeaponParametersObject.java
 
-	item_id: int = IntegerField(0, 2)
+	item_id: int = IntegerField(0, 2, primary=True)
 	min_damage: int = IntegerField(2, 2)
 	max_damage: int = IntegerField(4, 2)
 	min_range: int = IntegerField(6, 2)
@@ -638,8 +625,8 @@ class SkillRequirement(Entity):
 class Skill(Entity):
 	# leszekd25: Control27.cs
 
-	major_type: int = IntegerField(0, 1)
-	minor_type: int = IntegerField(1, 1)
+	major_type: int = IntegerField(0, 1, primary=True)
+	minor_type: int = IntegerField(1, 1, primary=True)
 	text_id: int = IntegerField(2, 2)
 
 	name = Relation('localisation', {'text_id': 'text_id', 'language': Language.ENGLISH}, attributes=['text'])
@@ -649,9 +636,8 @@ class Creature(Entity):
 	# leszekd25: Control18.cs
 	# Hokan-Ashir: creatures/common/CreaturesCommonParameterObject.java
 	_custom_length = 64
-	_primary = 'creature_id',
 
-	creature_id: int = IntegerField(0, 2)
+	creature_id: int = IntegerField(0, 2, primary=True)
 	name_id: int = IntegerField(2, 2)
 	stats_id: int = IntegerField(4 ,2)
 	experience: int = IntegerField(6 ,4)
@@ -737,7 +723,7 @@ class MerchantInventory(Entity):
 	# leszekd25: Control29.cs
 	# Hokan-Ashir: merchants/inventory/MerchantInventoryObject.java
 
-	merchant_inventory_id: int = IntegerField(0, 2)
+	merchant_inventory_id: int = IntegerField(0, 2, primary=True)
 	creature_id: int = IntegerField(2, 2)
 
 	merchant: Creature = Relation('creatures', {'creature_id': 'creature_id'})
@@ -768,7 +754,7 @@ class Object(Entity): # most descriptive naming
 
 	_custom_length = 54
 
-	object_id: int = IntegerField(0, 2)
+	object_id: int = IntegerField(0, 2, primary=True)
 	name_id: int = IntegerField(2, 2)
 	flags: int = IntegerField(4, 1)
 	flatten_mode: int = IntegerField(5, 1)
@@ -785,7 +771,7 @@ class Object(Entity): # most descriptive naming
 class Terrain(Entity):
 	# leszekd25: Control46.cs
 
-	terrain_id: int = IntegerField(0, 2)
+	terrain_id: int = IntegerField(0, 2, primary=True)
 	block_value: int = IntegerField(2, 1)
 	cultivation_flags: CultivationFlags = EnumField(3, 1)
 

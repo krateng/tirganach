@@ -17,17 +17,19 @@ class Field:
 	offset: int
 	len_bytes: int
 	data_type: type
+	primary: bool
 	type_decider: str
 	# type decider stores the name of another field in the entity
 	# the value of this field must be an enum which implements determine_sub_type
 
-	def __init__(self, offset: int, len_bytes: int, data_type: type = None, type_decider: str = None):
+	def __init__(self, offset: int, len_bytes: int, data_type: type = None, type_decider: str = None, primary=False):
 		self.offset = offset
 		self.len_bytes = len_bytes
 		if data_type:
 			self.data_type = data_type
 		if type_decider:
 			self.type_decider = type_decider
+		self.primary = primary
 
 	def parse_bytes(self, byte_source: bytes, parent_entity=None):
 		raise NotImplemented()

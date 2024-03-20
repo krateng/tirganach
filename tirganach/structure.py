@@ -17,11 +17,13 @@ class Table(list[T], Generic[T]):
 	_game_data: 'GameData'
 
 	offset: int
-	entity_type: Type[Entity]
-	entity_index: dict[tuple, Entity] = None
+	entity_type: Type[T]
+	entity_index: dict[tuple, T] = None
+	primary_keys: tuple # sorted alphabetically!
 
-	def __init__(self, raw_bytes: bytes | bytearray, entity_type: Type[Entity], game_data: 'GameData'):
+	def __init__(self, raw_bytes: bytes | bytearray, entity_type: Type[T], game_data: 'GameData'):
 		self.entity_type = entity_type
+		self.primary_keys = tuple(sorted(field_name for field_name, field in entity_type._fields.items() if field.primary))
 		self._game_data = game_data
 
 		offset = 0
@@ -73,9 +75,9 @@ class Table(list[T], Generic[T]):
 		return f"<[Table] {self.entity_type.__name__}>"
 
 	def where(self, **kwargs) -> list[T]:
-		if pkeys := self.entity_type._primary:
-			if set(kwargs.keys()) == set(pkeys):
-				ordered_pkeyvals = tuple(kwargs[pkey] for pkey in pkeys)
+		if self.primary_keys:
+			if set(kwargs.keys()) == set(self.primary_keys):
+				ordered_pkeyvals = tuple(kwargs[pkey] for pkey in self.primary_keys)
 				result = self.entity_index.get(ordered_pkeyvals)
 				if result:
 					return [result]
@@ -86,11 +88,11 @@ class Table(list[T], Generic[T]):
 
 	def create_index(self):
 		self.entity_index = self.entity_index or {}
-		if pkeys := self.entity_type._primary:
+		if self.primary_keys:
 			for element in self:
 				if element:
-					pkey_vals = tuple(getattr(element, pkey) for pkey in pkeys)
-					self.entity_index[pkey_vals] = element
+					ordered_pkeyvals = tuple(getattr(element, pkey) for pkey in self.primary_keys) #alphabetical
+					self.entity_index[ordered_pkeyvals] = element
 
 
 class TableDefinition:

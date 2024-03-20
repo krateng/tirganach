@@ -18,6 +18,9 @@ class UnknownEnumMember:
 	def __eq__(self, other):
 		return self.value == other.value
 
+	def __hash__(self):
+		return int.from_bytes(b''.join(i.to_bytes(length=1, byteorder='little') for i in self.value), byteorder='little')
+
 
 class School(Enum):
 	UNKNOWN = (0, 1)
